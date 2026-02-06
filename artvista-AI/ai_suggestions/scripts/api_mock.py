@@ -7,19 +7,18 @@ import os
 # Add the scripts directory to the path so we can import our modules
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from suggestion_engine import adaptive_suggestions
+from enhanced_suggestion_engine import adaptive_suggestions
 from art_creation_suggestions import art_creation_suggestions
 
 app = Flask(__name__)
 # Enable CORS for all routes
 CORS(app)
 
-# Dataset load karo
-with open("../dataset/art_suggestions.json", "r") as f:
+# Dataset load karo - use absolute path
+script_dir = os.path.dirname(os.path.abspath(__file__))
+dataset_path = os.path.join(script_dir, "../dataset/art_suggestions.json")
+with open(dataset_path, "r") as f:
     data = json.load(f)
-
-# This import is here to avoid circular imports
-from suggestion_engine import adaptive_suggestions
 
 @app.route("/adaptive_suggest", methods=["GET"])
 def suggest():

@@ -1,9 +1,12 @@
 import json
 import random
+import os
 from collections import defaultdict
 
-# Load dataset
-with open("../dataset/art_suggestions.json", "r") as f:
+# Load dataset with absolute path
+script_dir = os.path.dirname(os.path.abspath(__file__))
+dataset_path = os.path.join(script_dir, "../dataset/art_suggestions.json")
+with open(dataset_path, "r") as f:
     data = json.load(f)
 
 def get_user_preferences(user_id):

@@ -1,10 +1,13 @@
 import json
 import random
+import os
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-# Load dataset
-with open("../dataset/art_suggestions.json", "r") as f:
+# Load dataset with absolute path
+script_dir = os.path.dirname(os.path.abspath(__file__))
+dataset_path = os.path.join(script_dir, "../dataset/art_suggestions.json")
+with open(dataset_path, "r") as f:
     data = json.load(f)
 
 def calculate_user_similarity(user1, user2):
