@@ -70,7 +70,7 @@ const GamesHub = () => {
     // Send score to backend
     try {
       if (user) {
-        const response = await fetch('http://localhost:5000/api/game/submit', {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/game/submit`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

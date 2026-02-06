@@ -16,7 +16,7 @@ const Leaderboard = () => {
         setLoading(true);
         
         // Fetch from backend API
-        const response = await fetch('http://localhost:5000/api/game/leaderboard');
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/game/leaderboard`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch leaderboard data');

@@ -11,7 +11,8 @@ router.get('/suggestions/:userId', async (req, res) => {
     const { default: fetch } = await import('node-fetch');
     
     // Call the Python AI service
-    const response = await fetch(`http://localhost:5001/adaptive_suggest?user_id=${userId}`);
+    const aiServiceUrl = process.env.AI_SUGGESTIONS_URL || 'http://localhost:5001';
+    const response = await fetch(`${aiServiceUrl}/adaptive_suggest?user_id=${userId}`);
     
     if (!response.ok) {
       return res.status(500).json({ error: 'Failed to fetch AI suggestions from Python service' });
@@ -61,7 +62,8 @@ router.get('/art-creation/:userId', async (req, res) => {
     const { default: fetch } = await import('node-fetch');
     
     // Call the Python AI service
-    const response = await fetch(`http://localhost:5001/art_creation_suggestions/${userId}`);
+    const aiServiceUrl = process.env.AI_SUGGESTIONS_URL || 'http://localhost:5001';
+    const response = await fetch(`${aiServiceUrl}/art_creation_suggestions/${userId}`);
     
     if (!response.ok) {
       return res.status(500).json({ error: 'Failed to fetch art creation suggestions from Python service' });

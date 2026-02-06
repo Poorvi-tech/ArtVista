@@ -35,7 +35,8 @@ router.post('/start', async (req, res) => {
     const { default: fetch } = await import('node-fetch');
     
     // Call the Python AI game service
-    const response = await fetch('http://localhost:5002/start_game', {
+    const gameServiceUrl = process.env.AI_GAME_URL || 'http://localhost:5002';
+    const response = await fetch(`${gameServiceUrl}/start_game`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -61,7 +62,8 @@ router.post('/choose_background/:gameId', async (req, res) => {
     const { background } = req.body;
     
     // Call the Python AI game service
-    const response = await fetch(`http://localhost:5002/choose_background/${gameId}`, {
+    const gameServiceUrl = process.env.AI_GAME_URL || 'http://localhost:5002';
+    const response = await fetch(`${gameServiceUrl}/choose_background/${gameId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -88,7 +90,8 @@ router.post('/add_element/:gameId', async (req, res) => {
     const { element } = req.body;
     
     // Call the Python AI game service
-    const response = await fetch(`http://localhost:5002/add_element/${gameId}`, {
+    const gameServiceUrl = process.env.AI_GAME_URL || 'http://localhost:5002';
+    const response = await fetch(`${gameServiceUrl}/add_element/${gameId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -114,7 +117,8 @@ router.get('/check_scene/:gameId', async (req, res) => {
     const gameId = parseInt(req.params.gameId);
     
     // Call the Python AI game service
-    const response = await fetch(`http://localhost:5002/check_scene/${gameId}`);
+    const gameServiceUrl = process.env.AI_GAME_URL || 'http://localhost:5002';
+    const response = await fetch(`${gameServiceUrl}/check_scene/${gameId}`);
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -137,7 +141,8 @@ router.get('/suggestions/:gameId', async (req, res) => {
     const { default: fetch } = await import('node-fetch');
     
     // Call the Python AI game service
-    const response = await fetch(`http://localhost:5002/get_suggestions/${gameId}`);
+    const gameServiceUrl = process.env.AI_GAME_URL || 'http://localhost:5002';
+    const response = await fetch(`${gameServiceUrl}/get_suggestions/${gameId}`);
     
     if (!response.ok) {
       return res.status(500).json({ error: 'Failed to get game suggestions' });

@@ -17,7 +17,7 @@ const Profile = () => {
 
   const fetchProfileData = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/profile/${user.id}`);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/profile/${user.id}`);
       if (!response.ok) throw new Error("Failed to fetch profile data");
       
       const data = await response.json();
@@ -38,7 +38,7 @@ const Profile = () => {
     setNewPreference("");
     
     try {
-      await fetch(`http://localhost:5000/api/profile/${user.id}/preferences`, {
+      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/profile/${user.id}/preferences`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
@@ -55,7 +55,7 @@ const Profile = () => {
     setPreferences(updatedPreferences);
     
     try {
-      await fetch(`http://localhost:5000/api/profile/${user.id}/preferences`, {
+      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/profile/${user.id}/preferences`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"

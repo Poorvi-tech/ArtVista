@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    const response = await fetch("http://localhost:5000/api/auth/login", {
+    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -44,7 +44,7 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (name, email, password) => {
-    const response = await fetch("http://localhost:5000/api/auth/register", {
+    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -71,7 +71,7 @@ export function AuthProvider({ children }) {
       // For now, we'll simulate the Google login
       // This would normally be replaced with actual Google OAuth implementation
       
-      const response = await fetch("http://localhost:5000/api/auth/google", {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/google`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

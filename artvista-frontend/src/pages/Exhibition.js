@@ -128,15 +128,15 @@ const Exhibition = () => {
     
     try {
       // Check if backend API is available
-      const response = await fetch('http://localhost:5000/api/exhibition/status');
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/exhibition/status`);
       const isBackendAvailable = response.ok;
       
       if (isBackendAvailable) {
         let url;
         if (activeTab === "curated") {
-          url = `http://localhost:5000/api/exhibition/curated?sort=${sortBy}&filter=${filterBy}&search=${searchQuery}`;
+          url = `${process.env.REACT_APP_BACKEND_URL}/api/exhibition/curated?sort=${sortBy}&filter=${filterBy}&search=${searchQuery}`;
         } else {
-          url = `http://localhost:5000/api/exhibition/themed/${activeTab}?sort=${sortBy}&filter=${filterBy}&search=${searchQuery}`;
+          url = `${process.env.REACT_APP_BACKEND_URL}/api/exhibition/themed/${activeTab}?sort=${sortBy}&filter=${filterBy}&search=${searchQuery}`;
         }
         
         const apiResponse = await fetch(url);

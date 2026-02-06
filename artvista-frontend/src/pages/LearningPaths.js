@@ -20,16 +20,16 @@ const LearningPaths = () => {
         setLoading(true);
         
         // Check if backend API is available
-        const response = await fetch('http://localhost:5000/api/learning/status');
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/learning/status`);
         const isBackendAvailable = response.ok;
         
         if (isBackendAvailable) {
           // Fetch from backend API
-          const pathsResponse = await fetch('http://localhost:5000/api/learning/paths');
+          const pathsResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/learning/paths`);
           if (!pathsResponse.ok) throw new Error('Failed to fetch learning paths');
           
           const progressResponse = currentUser 
-            ? await fetch(`http://localhost:5000/api/learning/progress/${currentUser.uid}`)
+            ? await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/learning/progress/${currentUser.uid}`)
             : null;
           
           const pathsData = await pathsResponse.json();
@@ -276,7 +276,7 @@ const LearningPaths = () => {
     try {
       if (currentUser) {
         // In a real implementation, this would call the backend
-        const response = await fetch('http://localhost:5000/api/learning/enroll', {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/learning/enroll`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
