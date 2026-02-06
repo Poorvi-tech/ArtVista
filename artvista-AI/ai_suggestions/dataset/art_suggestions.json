@@ -1,0 +1,53 @@
+{
+  "users": [
+   {
+      "id": 1,
+      "name": "Aditi",
+      "preferences": ["landscape", "watercolor", "nature"],
+      "interactions": { "clicked_artworks": [], "completed_tutorials": [] }
+    },
+    {
+      "id": 2,
+      "name": "Rohan",
+      "preferences": ["urban", "abstract", "oil"],
+      "interactions": { "clicked_artworks": [], "completed_tutorials": [] }
+    }
+  ],
+  "artworks": [
+    {
+      "id": "A1",
+      "title": "Sunset Valley",
+      "style": "landscape",
+      "medium": "watercolor"
+    },
+    {
+      "id": "A2",
+      "title": "City Rush",
+      "style": "urban",
+      "medium": "oil"
+    },
+    {
+      "id": "A3",
+      "title": "Dream Shapes",
+      "style": "abstract",
+      "medium": "digital"
+    }
+  ],
+  "tutorials": [
+    {
+      "id": "T1",
+      "title": "How to paint landscapes with watercolor",
+      "style": "landscape"
+    },
+    {
+      "id": "T2",
+      "title": "Urban sketching for beginners",
+      "style": "urban"
+    },
+    {
+      "id": "T3",
+      "title": "Abstract art basics",
+      "style": "abstract"
+    }
+  ]
+}
