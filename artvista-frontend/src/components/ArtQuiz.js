@@ -106,14 +106,6 @@ const ArtQuiz = ({ difficulty = "easy", onComplete }) => {
     generateQuestions();
   }, [difficulty]);
 
-  // Handle time up
-  const handleTimeUp = useCallback(() => {
-    setTimerActive(false);
-    setTimeout(() => {
-      moveToNextQuestion();
-    }, 1500);
-  }, []);
-
   // Move to next question
   const moveToNextQuestion = useCallback(() => {
     if (currentQuestion < questions.length - 1) {
@@ -126,6 +118,14 @@ const ArtQuiz = ({ difficulty = "easy", onComplete }) => {
       setTimerActive(false);
     }
   }, [currentQuestion, questions.length]);
+
+  // Handle time up
+  const handleTimeUp = useCallback(() => {
+    setTimerActive(false);
+    setTimeout(() => {
+      moveToNextQuestion();
+    }, 1500);
+  }, [moveToNextQuestion]);
 
   // Effect for timer
   useEffect(() => {

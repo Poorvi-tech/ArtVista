@@ -16,10 +16,6 @@ const ArtCreator = () => {
   const [fontSize, setFontSize] = useState(16);
   const [isAddingText, setIsAddingText] = useState(false);
   const [symmetryMode, setSymmetryMode] = useState("none");
-  const [artStyles, setArtStyles] = useState([]);
-  const [selectedArtStyle, setSelectedArtStyle] = useState(null);
-  const [applyArtStyle, setApplyArtStyle] = useState(null);
-  const [addText, setAddText] = useState(null);
 
   const saveCanvasState = useCallback(() => {
     const canvas = canvasRef.current;
@@ -143,19 +139,6 @@ const ArtCreator = () => {
     link.download = `my-artwork-${Date.now()}.png`;
     link.href = dataUrl;
     link.click();
-  };
-
-  const redrawCanvas = () => {
-    if (historyStep >= 0 && canvasHistory[historyStep]) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      img.onload = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-      };
-      img.src = canvasHistory[historyStep];
-    }
   };
 
   const toggleGrid = () => {
@@ -598,7 +581,7 @@ const ArtCreator = () => {
             </div>
             <canvas
               ref={canvasRef}
-              onMouseDown={tool === 'text' && isAddingText ? addText : startDrawing}
+              onMouseDown={startDrawing}
               onMouseMove={draw}
               onMouseUp={stopDrawing}
               onMouseOut={stopDrawing}
@@ -681,53 +664,6 @@ const ArtCreator = () => {
             gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
             gap: "20px"
           }}>
-            {artStyles.map(style => (
-              <div 
-                key={style.id}
-                onClick={() => applyArtStyle(style.styleKey)}
-                style={{
-                  background: `linear-gradient(135deg, ${style.color} 0%, ${style.color}70 100%)`,
-                  borderRadius: "15px",
-                  padding: "20px",
-                  textAlign: "center",
-                  cursor: "pointer",
-                  transition: "all 0.3s ease",
-                  color: "white",
-                  boxShadow: selectedArtStyle === style.styleKey 
-                    ? "0 0 20px rgba(255, 106, 136, 0.8), 0 10px 25px rgba(0,0,0,0.2)" 
-                    : "0 6px 15px rgba(0,0,0,0.1)",
-                  transform: selectedArtStyle === style.styleKey ? "scale(1.05)" : "scale(1)",
-                  border: selectedArtStyle === style.styleKey ? "3px solid #FFD700" : "2px solid white"
-                }}
-                onMouseEnter={e => {
-                  if (selectedArtStyle !== style.styleKey) {
-                    e.currentTarget.style.transform = "scale(1.05)";
-                    e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.2)";
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (selectedArtStyle !== style.styleKey) {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.boxShadow = "0 6px 15px rgba(0,0,0,0.1)";
-                  }
-                }}
-              >
-                <h3 style={{ 
-                  margin: "0 0 12px 0", 
-                  fontSize: "1.4rem",
-                  textShadow: "1px 1px 2px rgba(0,0,0,0.3)"
-                }}>
-                  {style.name}
-                </h3>
-                <p style={{ 
-                  margin: 0, 
-                  fontSize: "0.95rem",
-                  textShadow: "1px 1px 1px rgba(0,0,0,0.3)"
-                }}>
-                  {style.description}
-                </p>
-              </div>
-            ))}
           </div>
         </div>
       </div>
