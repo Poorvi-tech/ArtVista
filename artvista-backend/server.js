@@ -57,7 +57,9 @@ app.get('/', (req, res) => {
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, 'frontend/build')));
-    app.get('/*', (req, res) => {
+    
+    // Catch all handler for frontend routes in production
+    app.get(/.*/, (req, res) => {
         res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
     });
 }
