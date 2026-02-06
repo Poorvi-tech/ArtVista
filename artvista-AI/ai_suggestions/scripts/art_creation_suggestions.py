@@ -3,11 +3,33 @@ import random
 import os
 from collections import defaultdict
 
-# Load dataset with absolute path
-script_dir = os.path.dirname(os.path.abspath(__file__))
-dataset_path = os.path.join(script_dir, "../dataset/art_suggestions.json")
-with open(dataset_path, "r") as f:
-    data = json.load(f)
+def load_dataset():
+    """Load the art suggestions dataset with fallback for deployment environments"""
+    # Get the directory of this script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    dataset_path = os.path.join(script_dir, "../dataset/art_suggestions.json")
+    
+    # If that doesn't work, try alternative path for deployment
+    if not os.path.exists(dataset_path):
+        dataset_path = os.path.join(script_dir, "..", "..", "artvista-AI", "ai_suggestions", "dataset", "art_suggestions.json")
+    
+    # Handle case where file might not exist (for deployment safety)
+    try:
+        with open(dataset_path, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        # Fallback to a minimal dataset for deployment
+        return {
+            "users": [],
+            "art_elements": [],
+            "art_styles": [],
+            "art_periods": [],
+            "artists": [],
+            "color_palettes": []
+        }
+
+# Load dataset when module is imported
+data = load_dataset()
 
 def get_user_preferences(user_id):
     """Get user preferences based on their profile and interaction history"""
