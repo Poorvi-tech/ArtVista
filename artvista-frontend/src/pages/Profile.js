@@ -13,7 +13,7 @@ const Profile = () => {
     if (user) {
       fetchProfileData();
     }
-  }, [user]);
+  }, [user, fetchProfileData]);
 
   const fetchProfileData = async () => {
     try {
@@ -147,7 +147,6 @@ const Profile = () => {
           onClick={() => setActiveTab("overview")}
           style={{
             padding: "10px 20px",
-            border: "none",
             borderRadius: "30px",
             background: activeTab === "overview" ? "#FF6A88" : "white",
             color: activeTab === "overview" ? "white" : "#FF6A88",
@@ -165,7 +164,6 @@ const Profile = () => {
           onClick={() => setActiveTab("insights")}
           style={{
             padding: "10px 20px",
-            border: "none",
             borderRadius: "30px",
             background: activeTab === "insights" ? "#FF6A88" : "white",
             color: activeTab === "insights" ? "white" : "#FF6A88",
@@ -183,7 +181,6 @@ const Profile = () => {
           onClick={() => setActiveTab("preferences")}
           style={{
             padding: "10px 20px",
-            border: "none",
             borderRadius: "30px",
             background: activeTab === "preferences" ? "#FF6A88" : "white",
             color: activeTab === "preferences" ? "white" : "#FF6A88",

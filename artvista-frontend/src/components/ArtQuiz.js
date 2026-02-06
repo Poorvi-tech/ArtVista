@@ -153,7 +153,7 @@ const ArtQuiz = ({ difficulty = "easy", onComplete }) => {
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [timerActive, timeLeft, showResult]);
+  }, [timerActive, timeLeft, showResult, handleTimeUp]);
 
   // Handle answer selection
   const handleAnswerSelect = (answer) => {
@@ -198,10 +198,7 @@ const ArtQuiz = ({ difficulty = "easy", onComplete }) => {
     return baseScore + timeBonus;
   };
 
-  // Format time display
-  const formatTime = (seconds) => {
-    return `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}`;
-  };
+
 
   if (!gameStarted) {
     return (

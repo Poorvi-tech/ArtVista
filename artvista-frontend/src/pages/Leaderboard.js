@@ -6,7 +6,7 @@ const Leaderboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const { currentUser } = useAuth();
+
   
   useEffect(() => {
     let intervalId;
@@ -218,7 +218,7 @@ const Leaderboard = () => {
                   minWidth: "400px"
                 }}
               >
-                <thead role="rowgroup">
+                <thead>
                   <tr role="row" style={{ 
                     background: "linear-gradient(135deg, #FF9A8B 0%, #FF6A88 50%, #FF99AC 100%)", 
                     color: "white", 
@@ -232,7 +232,7 @@ const Leaderboard = () => {
                     <th role="columnheader" style={{ padding: "15px", fontSize: "1.1rem" }}>Time</th>
                   </tr>
                 </thead>
-                <tbody role="rowgroup">
+                <tbody>
                   {leaderboardData.map((player, index) => (
                     <tr
                       key={player._id || index}

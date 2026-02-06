@@ -1,31 +1,5 @@
 import React from 'react';
 
-const trackInteraction = (userId, suggestionType, interactionType) => {
-  // Updated to send data to the backend
-  // For now, we'll just log it since there's no specific endpoint for these interactions
-  console.log(`User ${userId} interacted with ${suggestionType}: ${interactionType}`);
-  // In a real implementation, you would make an API call to track the interaction
-  // For example:
-  // fetch('http://localhost:5000/api/ai/interaction/suggestion', {
-  //   method: 'POST',
-  //   headers: {
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: JSON.stringify({
-  //     userId,
-  //     suggestionType,
-  //     interactionType
-  //   })
-  // })
-  // .then(response => response.json())
-  // .then(data => {
-  //   console.log('Interaction tracked:', data);
-  // })
-  // .catch(error => {
-  //   console.error('Error tracking interaction:', error);
-  // });
-};
-
 const ArtCreationSuggestions = () => {
   return (
     <div style={{

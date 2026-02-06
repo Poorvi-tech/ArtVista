@@ -178,7 +178,7 @@ const SpotTheDifference = ({ difficulty = "easy", onComplete }) => {
     if (gameStarted) {
       drawImages();
     }
-  }, [foundDifferences, gameStarted, differences]);
+  }, [foundDifferences, gameStarted, differences, drawImages]);
 
   // Handle canvas click
   const handleCanvasClick = (e) => {
@@ -250,7 +250,7 @@ const SpotTheDifference = ({ difficulty = "easy", onComplete }) => {
         }, 1000);
       }
     }
-  }, [gameActive, gameStarted, timeLeft, foundDifferences.length, differences.length, mistakes, hintUsed, onComplete]);
+  }, [gameActive, gameStarted, timeLeft, foundDifferences.length, differences.length, mistakes, hintUsed, onComplete, calculateScore]);
 
   if (!gameStarted) {
     return (

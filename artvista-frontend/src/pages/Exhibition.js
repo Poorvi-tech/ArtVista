@@ -36,7 +36,7 @@ const Exhibition = () => {
 
   useEffect(() => {
     fetchExhibition();
-  }, [activeTab, sortBy, filterBy, searchQuery]);
+  }, [activeTab, sortBy, filterBy, searchQuery, fetchExhibition]);
 
   const mockArtworks = [
     {
@@ -426,7 +426,6 @@ const Exhibition = () => {
           onClick={() => setActiveTab("curated")}
           style={{
             padding: "10px 20px",
-            border: "none",
             borderRadius: "30px",
             background: activeTab === "curated" ? "#FF6A88" : "white",
             color: activeTab === "curated" ? "white" : "#FF6A88",
@@ -444,7 +443,6 @@ const Exhibition = () => {
           onClick={() => setActiveTab("landscapes")}
           style={{
             padding: "10px 20px",
-            border: "none",
             borderRadius: "30px",
             background: activeTab === "landscapes" ? "#FF6A88" : "white",
             color: activeTab === "landscapes" ? "white" : "#FF6A88",
@@ -462,7 +460,6 @@ const Exhibition = () => {
           onClick={() => setActiveTab("urban")}
           style={{
             padding: "10px 20px",
-            border: "none",
             borderRadius: "30px",
             background: activeTab === "urban" ? "#FF6A88" : "white",
             color: activeTab === "urban" ? "white" : "#FF6A88",
@@ -480,7 +477,6 @@ const Exhibition = () => {
           onClick={() => setActiveTab("abstract")}
           style={{
             padding: "10px 20px",
-            border: "none",
             borderRadius: "30px",
             background: activeTab === "abstract" ? "#FF6A88" : "white",
             color: activeTab === "abstract" ? "white" : "#FF6A88",

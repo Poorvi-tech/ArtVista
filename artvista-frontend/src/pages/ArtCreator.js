@@ -6,7 +6,6 @@ const ArtCreator = () => {
   const [color, setColor] = useState('#FF6A88');
   const [brushSize, setBrushSize] = useState(5);
   const [tool, setTool] = useState('brush'); // brush, eraser, fill, shape, text
-  const [shapes, setShapes] = useState([]);
   const [canvasHistory, setCanvasHistory] = useState([]);
   const [historyStep, setHistoryStep] = useState(-1);
   const [textInput, setTextInput] = useState('');
@@ -73,7 +72,7 @@ const ArtCreator = () => {
     
     // Save initial state
     saveCanvasState();
-  }, [canvasSize]);
+  }, [canvasSize, saveCanvasState]);
 
   const saveCanvasState = () => {
     const canvas = canvasRef.current;
@@ -182,6 +181,9 @@ const ArtCreator = () => {
           ctx.moveTo(shapeStartX, shapeStartY);
           ctx.lineTo(x, y);
           break;
+        default:
+          // Default case for unknown shapes
+          break;
       }
       
       if (fillColor !== 'transparent') {
@@ -228,6 +230,9 @@ const ArtCreator = () => {
           ctx.moveTo(canvas.width - x, y);
         }
         break;
+      default:
+        // Default case for unknown tools
+        break;
     }
   };
 
@@ -241,8 +246,7 @@ const ArtCreator = () => {
       ctx.fillStyle = fillColor;
       ctx.lineWidth = strokeWidth;
       
-      const width = shapeStartX - shapeStartX; // Will be calculated properly
-      const height = shapeStartY - shapeStartY; // Will be calculated properly
+
       
       ctx.beginPath();
       
@@ -267,6 +271,9 @@ const ArtCreator = () => {
         case 'line':
           ctx.moveTo(shapeStartX, shapeStartY);
           ctx.lineTo(currentMouseX, currentMouseY);
+          break;
+        default:
+          // Default case for unknown shapes
           break;
       }
       
@@ -360,6 +367,9 @@ const ArtCreator = () => {
         ctx.lineTo(endX, endY);
         ctx.lineTo(startX - (endX - startX), endY);
         ctx.closePath();
+        break;
+      default:
+        // Default case for unknown shapes
         break;
     }
     

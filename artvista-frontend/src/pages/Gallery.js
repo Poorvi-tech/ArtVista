@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Lightbox from "../components/Lightbox";
 import CommunitySection from "../components/CommunitySection";
 import { useAuth } from "../context/AuthContext";
@@ -213,7 +213,6 @@ const Gallery = () => {
             onClick={() => setSelectedCategory(cat)}
             style={{
               padding: "10px 20px",
-              border: "none",
               borderRadius: "30px",
               background: selectedCategory === cat ? "#FF6A88" : "white",
               color: selectedCategory === cat ? "white" : "#FF6A88",

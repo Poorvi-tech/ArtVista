@@ -1,27 +1,5 @@
 import React from 'react';
 
-const trackInteraction = (userId, itemId, itemType, interactionType) => {
-  // Updated to use the correct backend endpoint on port 5000
-  fetch('http://localhost:5000/api/ai/interaction/' + itemType, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      userId,
-      [itemType + 'Id']: itemId,
-      interactionType
-    })
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Interaction tracked:', data);
-  })
-  .catch(error => {
-    console.error('Error tracking interaction:', error);
-  });
-};
-
 const AIRecommendations = () => {
   return (
     <div style={{

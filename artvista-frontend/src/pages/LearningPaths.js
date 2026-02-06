@@ -437,7 +437,6 @@ const LearningPaths = () => {
           onClick={() => setActiveTab("all")}
           style={{
             padding: "10px 20px",
-            border: "none",
             borderRadius: "30px",
             background: activeTab === "all" ? "#FF6A88" : "white",
             color: activeTab === "all" ? "white" : "#FF6A88",
@@ -455,7 +454,6 @@ const LearningPaths = () => {
           onClick={() => setActiveTab("Painting")}
           style={{
             padding: "10px 20px",
-            border: "none",
             borderRadius: "30px",
             background: activeTab === "Painting" ? "#FF6A88" : "white",
             color: activeTab === "Painting" ? "white" : "#FF6A88",
@@ -473,7 +471,6 @@ const LearningPaths = () => {
           onClick={() => setActiveTab("Digital Art")}
           style={{
             padding: "10px 20px",
-            border: "none",
             borderRadius: "30px",
             background: activeTab === "Digital Art" ? "#FF6A88" : "white",
             color: activeTab === "Digital Art" ? "white" : "#FF6A88",
@@ -491,7 +488,6 @@ const LearningPaths = () => {
           onClick={() => setActiveTab("Drawing")}
           style={{
             padding: "10px 20px",
-            border: "none",
             borderRadius: "30px",
             background: activeTab === "Drawing" ? "#FF6A88" : "white",
             color: activeTab === "Drawing" ? "white" : "#FF6A88",
