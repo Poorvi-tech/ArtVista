@@ -72,7 +72,7 @@ const ArtCreator = () => {
     
     // Save initial state
     saveCanvasState();
-  }, [canvasSize, saveCanvasState]);
+  }, [canvasSize]);
 
   const saveCanvasState = useCallback(() => {
     const canvas = canvasRef.current;

@@ -155,6 +155,19 @@ const ArtQuiz = ({ difficulty = "easy", onComplete }) => {
     return () => clearInterval(interval);
   }, [timerActive, timeLeft, showResult, handleTimeUp]);
 
+  // Move to next question
+  const moveToNextQuestion = useCallback(() => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(prev => prev + 1);
+      setSelectedAnswer("");
+      setTimeLeft(30);
+      setTimerActive(true);
+    } else {
+      setShowResult(true);
+      setTimerActive(false);
+    }
+  }, [currentQuestion, questions.length]);
+
   // Handle time up
   const handleTimeUp = useCallback(() => {
     setTimerActive(false);
@@ -170,19 +183,6 @@ const ArtQuiz = ({ difficulty = "easy", onComplete }) => {
     
     if (answer === questions[currentQuestion].correct) {
       setScore(prev => prev + (difficulty === "easy" ? 20 : difficulty === "medium" ? 30 : 40));
-    }
-  };
-
-  // Move to next question
-  const moveToNextQuestion = () => {
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(prev => prev + 1);
-      setSelectedAnswer("");
-      setTimeLeft(30);
-      setTimerActive(true);
-    } else {
-      setShowResult(true);
-      setTimerActive(false);
     }
   };
 

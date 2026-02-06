@@ -13,7 +13,7 @@ const Profile = () => {
     if (user) {
       fetchProfileData();
     }
-  }, [user, fetchProfileData]);
+  }, [user]);
 
   const fetchProfileData = useCallback(async () => {
     try {

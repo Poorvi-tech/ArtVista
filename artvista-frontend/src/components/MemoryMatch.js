@@ -118,7 +118,7 @@ const MemoryMatch = ({ difficulty = "easy", onComplete }) => {
         onComplete(score, moves, timer);
       }
     }
-  }, [matched, cards, moves, timer, onComplete, calculateScore]);
+  }, [matched, cards, moves, timer, onComplete]);
 
   const calculateScore = useCallback(() => {
     const baseScore = difficulty === "easy" ? 100 : difficulty === "medium" ? 150 : 200;

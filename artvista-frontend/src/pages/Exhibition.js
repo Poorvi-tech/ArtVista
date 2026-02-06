@@ -36,7 +36,11 @@ const Exhibition = () => {
 
   useEffect(() => {
     fetchExhibition();
-  }, [activeTab, sortBy, filterBy, searchQuery, fetchExhibition]);
+  }, [activeTab, sortBy, filterBy, searchQuery]);
+
+  const generateMockExhibition = useCallback(() => {
+    return mockExhibitions[activeTab] || mockExhibitions.curated;
+  }, [activeTab, mockExhibitions]);
 
   const fetchExhibition = useCallback(async () => {
     setLoading(true);
@@ -157,10 +161,6 @@ const Exhibition = () => {
       description: "An exploration of form, color, and emotion through abstract art.",
       artworks: mockArtworks.filter(art => art.category === "abstract")
     }
-  };
-
-  const generateMockExhibition = () => {
-    return mockExhibitions[activeTab] || mockExhibitions.curated;
   };
 
   const toggleFavorite = (artworkId) => {
