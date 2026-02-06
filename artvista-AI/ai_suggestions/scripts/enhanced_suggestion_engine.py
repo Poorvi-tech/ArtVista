@@ -99,7 +99,7 @@ def trending_recommendations():
     
     return trending_artworks, trending_tutorials
 
-def enhanced_adaptive_suggestions(user_id):
+def adaptive_suggestions(user_id):
     """Enhanced recommendation system combining multiple approaches"""
     user = next(u for u in data["users"] if u["id"] == user_id)
     
@@ -155,7 +155,7 @@ def enhanced_adaptive_suggestions(user_id):
 # Example usage
 if __name__ == "__main__":
     print("Enhanced Adaptive Suggestions for Aditi:")
-    print(json.dumps(enhanced_adaptive_suggestions(1), indent=2))
+    print(json.dumps(adaptive_suggestions(1), indent=2))
     
     print("\nEnhanced Adaptive Suggestions for Rohan:")
-    print(json.dumps(enhanced_adaptive_suggestions(2), indent=2))
+    print(json.dumps(adaptive_suggestions(2), indent=2))
