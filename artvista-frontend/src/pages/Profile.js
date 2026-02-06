@@ -23,12 +23,24 @@ const Profile = () => {
       const data = await response.json();
       setProfileData(data.user);
       setPreferences(data.user.preferences || []);
-    } catch (err) {
-      console.error("Error fetching profile:", err);
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
     }
   }, [user]);
+
+  const updateProfile = async (profileData) => {
+    try {
+      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/profile/${user.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(profileData)
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  };
 
   const addPreference = async () => {
     if (!newPreference.trim()) return;

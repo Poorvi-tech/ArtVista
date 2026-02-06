@@ -34,6 +34,93 @@ const Exhibition = () => {
     };
   }, []);
 
+  const mockExhibitions = useMemo(() => ({
+    curated: {
+      _id: "curated-exhibition-1",
+      title: "Featured Collections",
+      curator: "ArtVista Gallery",
+      startDate: "2023-01-01",
+      endDate: "2023-12-31",
+      theme: "Featured Artist Exhibition showcasing our monthly themes and curated content in the background throughout the sections.",
+      artworkCount: 12,
+      featured: true,
+      description: "A curated selection of featured artworks from our community",
+      artworks: mockArtworks
+    },
+    trending: {
+      _id: "trending-exhibition-1",
+      title: "Trending Now",
+      curator: "Community Curators",
+      startDate: "2023-06-01",
+      endDate: "2023-08-31",
+      theme: "trending",
+      artworkCount: 8,
+      featured: false,
+      description: "The most popular artworks from our community this month",
+      artworks: mockArtworks.filter(art => art.likes > 50)
+    },
+    featured: {
+      _id: "featured-exhibition-1",
+      title: "Artist Spotlight",
+      curator: "ArtVista Team",
+      startDate: "2023-07-15",
+      endDate: "2023-09-30",
+      theme: "featured",
+      artworkCount: 6,
+      featured: true,
+      description: "Spotlight on emerging artists from our community",
+      artworks: mockArtworks.slice(0, 6)
+    },
+    abstract: {
+      _id: "abstract-exhibition-1",
+      title: "Abstract Expressions",
+      curator: "Modern Art Collective",
+      startDate: "2023-08-01",
+      endDate: "2023-10-31",
+      theme: "abstract",
+      artworkCount: 10,
+      featured: false,
+      description: "Exploring the world of abstract art and expression",
+      artworks: mockArtworks.filter(art => art.category === "abstract")
+    },
+    landscape: {
+      _id: "landscape-exhibition-1",
+      title: "Natural Landscapes",
+      curator: "Nature Photography Society",
+      startDate: "2023-09-01",
+      endDate: "2023-11-30",
+      theme: "landscape",
+      artworkCount: 7,
+      featured: false,
+      description: "Beautiful landscapes from around the world",
+      artworks: mockArtworks.filter(art => art.category === "landscape")
+    },
+    portrait: {
+      _id: "portrait-exhibition-1",
+      title: "Human Expressions",
+      curator: "Portrait Masters",
+      startDate: "2023-10-01",
+      endDate: "2023-12-31",
+      theme: "portrait",
+      artworkCount: 9,
+      featured: false,
+      description: "Capturing the human spirit through portraiture",
+      artworks: mockArtworks.filter(art => art.category === "portrait")
+    },
+    urban: {
+      _id: "urban-exhibition-1",
+      title: "City Life",
+      curator: "Urban Artists Collective",
+      startDate: "2023-11-01",
+      endDate: "2024-01-31",
+      theme: "urban",
+      artworkCount: 5,
+      featured: false,
+      description: "The energy and spirit of urban environments",
+      artworks: mockArtworks.filter(art => art.category === "urban")
+    }
+  }), [mockArtworks]);
+
   useEffect(() => {
     fetchExhibition();
   }, [activeTab, sortBy, filterBy, searchQuery]);
@@ -135,33 +222,6 @@ const Exhibition = () => {
       description: "Vibrant abstract art representing dreams"
     }
   ];
-
-  const mockExhibitions = {
-    curated: {
-      title: "AI Curated Collection",
-      theme: "Machine Learning Selections",
-      description: "A curated collection of artworks selected by our AI algorithms based on popularity and visual appeal.",
-      artworks: mockArtworks
-    },
-    landscapes: {
-      title: "Natural Landscapes",
-      theme: "Nature's Beauty",
-      description: "A collection of stunning landscape artworks showcasing the beauty of nature.",
-      artworks: mockArtworks.filter(art => art.category === "landscape")
-    },
-    urban: {
-      title: "Urban Exploration",
-      theme: "City Life",
-      description: "Discover the vibrant energy of city life through contemporary urban art.",
-      artworks: mockArtworks.filter(art => art.category === "urban")
-    },
-    abstract: {
-      title: "Abstract Expressions",
-      theme: "Creative Freedom",
-      description: "An exploration of form, color, and emotion through abstract art.",
-      artworks: mockArtworks.filter(art => art.category === "abstract")
-    }
-  };
 
   const toggleFavorite = (artworkId) => {
     setFavorites(prev => 

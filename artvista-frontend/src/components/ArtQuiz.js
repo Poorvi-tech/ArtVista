@@ -153,7 +153,7 @@ const ArtQuiz = ({ difficulty = "easy", onComplete }) => {
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [timerActive, timeLeft, showResult, handleTimeUp]);
+  }, [timerActive, timeLeft, showResult]);
 
   // Move to next question
   const moveToNextQuestion = useCallback(() => {
