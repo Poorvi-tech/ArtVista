@@ -341,44 +341,6 @@ const ArtCreator = () => {
     saveCanvasState();
   };
 
-  // const drawShape = (shapeType, startX, startY, endX, endY) => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    
-    ctx.strokeStyle = color;
-    ctx.fillStyle = fillColor;
-    ctx.lineWidth = strokeWidth;
-    
-    const width = endX - startX;
-    const height = endY - startY;
-    
-    ctx.beginPath();
-    
-    switch (shapeType) {
-      case 'rectangle':
-        ctx.rect(startX, startY, width, height);
-        break;
-      case 'circle':
-        const radius = Math.sqrt(width * width + height * height);
-        ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
-        break;
-      case 'triangle':
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-        ctx.lineTo(startX - (endX - startX), endY);
-        ctx.closePath();
-        break;
-      default:
-        // Default case for unknown shapes
-        break;
-    }
-    
-    if (fillColor !== 'transparent') {
-      ctx.fill();
-    }
-    ctx.stroke();
-  // };
-
   const toggleGrid = () => {
     setGridEnabled(!gridEnabled);
     drawGrid();
