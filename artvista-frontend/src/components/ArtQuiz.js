@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 const ArtQuiz = ({ difficulty = "easy", onComplete }) => {
   const [questions, setQuestions] = useState([]);
@@ -155,6 +155,14 @@ const ArtQuiz = ({ difficulty = "easy", onComplete }) => {
     return () => clearInterval(interval);
   }, [timerActive, timeLeft, showResult, handleTimeUp]);
 
+  // Handle time up
+  const handleTimeUp = useCallback(() => {
+    setTimerActive(false);
+    setTimeout(() => {
+      moveToNextQuestion();
+    }, 1500);
+  }, [moveToNextQuestion]);
+
   // Handle answer selection
   const handleAnswerSelect = (answer) => {
     if (selectedAnswer) return; // Prevent changing answer
@@ -163,14 +171,6 @@ const ArtQuiz = ({ difficulty = "easy", onComplete }) => {
     if (answer === questions[currentQuestion].correct) {
       setScore(prev => prev + (difficulty === "easy" ? 20 : difficulty === "medium" ? 30 : 40));
     }
-  };
-
-  // Handle time up
-  const handleTimeUp = () => {
-    setTimerActive(false);
-    setTimeout(() => {
-      moveToNextQuestion();
-    }, 1500);
   };
 
   // Move to next question

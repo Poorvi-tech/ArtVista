@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 const MemoryMatch = ({ difficulty = "easy", onComplete }) => {
   const [cards, setCards] = useState([]);
@@ -120,12 +120,12 @@ const MemoryMatch = ({ difficulty = "easy", onComplete }) => {
     }
   }, [matched, cards, moves, timer, onComplete, calculateScore]);
 
-  const calculateScore = () => {
+  const calculateScore = useCallback(() => {
     const baseScore = difficulty === "easy" ? 100 : difficulty === "medium" ? 150 : 200;
     const timeBonus = Math.max(0, 300 - timer);
     const movePenalty = moves * 2;
     return Math.max(50, baseScore + timeBonus - movePenalty);
-  };
+  }, [difficulty, timer, moves]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);

@@ -73,7 +73,7 @@ const Exhibition = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, sortBy, filterBy, searchQuery]);
+  }, [activeTab, sortBy, filterBy, searchQuery, generateMockExhibition]);
 
   const mockArtworks = [
     {

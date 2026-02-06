@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 const SpotTheDifference = ({ difficulty = "easy", onComplete }) => {
   const [differences, setDifferences] = useState([]);
@@ -104,7 +104,7 @@ const SpotTheDifference = ({ difficulty = "easy", onComplete }) => {
   };
 
   // Draw the comparison images
-  const drawImages = () => {
+  const drawImages = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -158,7 +158,7 @@ const SpotTheDifference = ({ difficulty = "easy", onComplete }) => {
       ctx.lineTo(diff.x + 7, diff.y - 6);
       ctx.stroke();
     });
-  };
+  }, [canvasRef, differences, foundDifferences]);
 
   // Timer effect
   useEffect(() => {
@@ -223,7 +223,7 @@ const SpotTheDifference = ({ difficulty = "easy", onComplete }) => {
   };
 
   // Calculate score
-  const calculateScore = () => {
+  const calculateScore = useCallback(() => {
     const baseScore = difficulty === "easy" ? 100 : difficulty === "medium" ? 150 : 200;
     const foundBonus = foundDifferences.length * 20;
     const timeBonus = Math.max(0, timeLeft * 2);
@@ -231,7 +231,7 @@ const SpotTheDifference = ({ difficulty = "easy", onComplete }) => {
     const hintPenalty = hintUsed ? 20 : 0;
     
     return Math.max(0, baseScore + foundBonus + timeBonus - mistakePenalty - hintPenalty);
-  };
+  }, [difficulty, foundDifferences.length, timeLeft, mistakes, hintUsed]);
 
   // Format time
   const formatTime = (seconds) => {

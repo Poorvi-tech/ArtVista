@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 const ArtCreator = () => {
   const canvasRef = useRef(null);
@@ -74,13 +74,13 @@ const ArtCreator = () => {
     saveCanvasState();
   }, [canvasSize, saveCanvasState]);
 
-  const saveCanvasState = () => {
+  const saveCanvasState = useCallback(() => {
     const canvas = canvasRef.current;
     const newHistory = canvasHistory.slice(0, historyStep + 1);
     newHistory.push(canvas.toDataURL());
     setCanvasHistory(newHistory);
     setHistoryStep(newHistory.length - 1);
-  };
+  }, [canvasRef, canvasHistory, historyStep]);
 
   const undo = () => {
     if (historyStep > 0) {
@@ -341,7 +341,7 @@ const ArtCreator = () => {
     saveCanvasState();
   };
 
-  const drawShape = (shapeType, startX, startY, endX, endY) => {
+  // const drawShape = (shapeType, startX, startY, endX, endY) => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     
@@ -377,7 +377,7 @@ const ArtCreator = () => {
       ctx.fill();
     }
     ctx.stroke();
-  };
+  // };
 
   const toggleGrid = () => {
     setGridEnabled(!gridEnabled);
