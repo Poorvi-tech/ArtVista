@@ -50,11 +50,15 @@ ArtVista/
 │   │   └── UserProgress.js
 │   └── server.js            # Express app setup
 │
-└── artvista-AI/             # Python AI/ML components
-    └── ai_suggestions/
-        ├── scripts/         # AI suggestion engines
-        ├── dataset/         # Training data
-        └── docs/            # Research documentation
+└── artvista-AI/             # Python AI/ML & Game Logic
+    ├── ai_suggestions/      # AI recommendation engine
+    │   ├── scripts/         # AI suggestion engines
+    │   ├── dataset/         # Training data
+    │   └── docs/            # AI documentation
+    └── game_logic/          # Game logic & rules engine
+        ├── scripts/         # Game engines and APIs
+        ├── sketches/        # Game design sketches
+        └── docs/            # Game documentation
 ```
 
 ## 🛠️ Tech Stack
@@ -77,7 +81,9 @@ ArtVista/
 ### AI/ML
 - **Python** - Programming language
 - **Flask** - Web framework for ML APIs
-- **JSON** - Data format for suggestions
+- **AI Suggestions** - Personalized art recommendation engine
+- **Game Logic** - Interactive game rules and mechanics
+- **JSON** - Data format for suggestions and game data
 
 ### DevOps & Tools
 - **npm** - Package management
