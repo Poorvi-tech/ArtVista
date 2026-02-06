@@ -9,6 +9,22 @@ from enhanced_drag_drop_game import EnhancedDragDropGame
 
 app = Flask(__name__)
 
+@app.route('/')
+def home():
+    return jsonify({
+        'message': 'Welcome to ArtVista AI Game API',
+        'endpoints': [
+            '/start_game',
+            '/choose_background/<int:game_id>',
+            '/add_element/<int:game_id>',
+            '/check_scene/<int:game_id>',
+            '/get_suggestions/<int:game_id>',
+            '/adjust_difficulty/<int:game_id>',
+            '/leaderboard'
+        ],
+        'method': 'POST for game creation, GET for other endpoints'
+    })
+
 # In-memory storage for active games
 games = {}
 
@@ -117,6 +133,11 @@ def adjust_difficulty(game_id):
         'difficulty': game.difficulty,
         'level': game.level
     })
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint to verify the API is running"""
+    return jsonify({'status': 'healthy', 'message': 'AI Game API is running'})
 
 @app.route('/leaderboard', methods=['GET'])
 def get_leaderboard():
