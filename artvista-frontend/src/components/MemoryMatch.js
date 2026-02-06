@@ -5,96 +5,62 @@ const MemoryMatch = ({ difficulty = "easy", onComplete }) => {
   const [flipped, setFlipped] = useState([]);
   const [matched, setMatched] = useState([]);
   const [moves, setMoves] = useState(0);
-  const [gameStarted, setGameStarted] = useState(false);
   const [timer, setTimer] = useState(0);
-  const [gameActive, setGameActive] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
 
-  // Card sets for different difficulties
-  const cardSets = {
-    easy: [
-      { id: 1, emoji: "🎨", name: "Palette" },
-      { id: 2, emoji: "🖌️", name: "Brush" },
-      { id: 3, emoji: "🖼️", name: "Frame" },
-      { id: 4, emoji: "🎭", name: "Mask" },
-      { id: 5, emoji: "🖍️", name: "Crayon" },
-      { id: 6, emoji: "🧵", name: "Thread" }
-    ],
-    medium: [
-      { id: 1, emoji: "🎨", name: "Palette" },
-      { id: 2, emoji: "🖌️", name: "Brush" },
-      { id: 3, emoji: "🖼️", name: "Frame" },
-      { id: 4, emoji: "🎭", name: "Mask" },
-      { id: 5, emoji: "🖍️", name: "Crayon" },
-      { id: 6, emoji: "🧵", name: "Thread" },
-      { id: 7, emoji: "✂️", name: "Scissors" },
-      { id: 8, emoji: "📐", name: "Ruler" },
-      { id: 9, emoji: "📎", name: "Clip" },
-      { id: 10, emoji: "📌", name: "Pin" }
-    ],
-    hard: [
-      { id: 1, emoji: "🎨", name: "Palette" },
-      { id: 2, emoji: "🖌️", name: "Brush" },
-      { id: 3, emoji: "🖼️", name: "Frame" },
-      { id: 4, emoji: "🎭", name: "Mask" },
-      { id: 5, emoji: "🖍️", name: "Crayon" },
-      { id: 6, emoji: "🧵", name: "Thread" },
-      { id: 7, emoji: "✂️", name: "Scissors" },
-      { id: 8, emoji: "📐", name: "Ruler" },
-      { id: 9, emoji: "📎", name: "Clip" },
-      { id: 10, emoji: "📌", name: "Pin" },
-      { id: 11, emoji: "📏", name: "Scale" },
-      { id: 12, emoji: "🔨", name: "Hammer" },
-      { id: 13, emoji: "🔧", name: "Wrench" },
-      { id: 14, emoji: "⚙️", name: "Gear" }
-    ]
-  };
+  const calculateScore = useCallback(() => {
+    const baseScore = difficulty === "easy" ? 100 : difficulty === "medium" ? 150 : 200;
+    const timeBonus = Math.max(0, 300 - timer);
+    const movePenalty = moves * 2;
+    return Math.max(50, baseScore + timeBonus - movePenalty);
+  }, [difficulty, timer, moves]);
 
-  // Timer effect
+  useEffect(() => {
+    // Initialize game
+    const symbols = ["🎨", "🖌️", "🖼️", "🎭", "🎪", "🎨", "🖌️", "🖼️", "🎭", "🎪"];
+    const shuffled = [...symbols].sort(() => Math.random() - 0.5);
+    const gameCards = shuffled.map((symbol, index) => ({
+      id: index,
+      symbol,
+      isFlipped: false
+    }));
+    setCards(gameCards);
+    setIsRunning(true);
+  }, [difficulty]);
+
   useEffect(() => {
     let interval;
-    if (gameActive && matched.length < cards.length / 2) {
+    if (isRunning) {
       interval = setInterval(() => {
         setTimer(prev => prev + 1);
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [gameActive, matched.length, cards.length]);
+  }, [isRunning]);
 
-  // Initialize game
-  const initializeGame = () => {
-    const baseCards = cardSets[difficulty];
-    const gameCards = [...baseCards, ...baseCards]
-      .sort(() => Math.random() - 0.5)
-      .map((card, index) => ({
-        ...card,
-        uniqueId: `${card.id}-${index}`
-      }));
-    
-    setCards(gameCards);
-    setFlipped([]);
-    setMatched([]);
-    setMoves(0);
-    setTimer(0);
-    setGameStarted(true);
-    setGameActive(true);
-  };
+  useEffect(() => {
+    if (matched.length === cards.length && cards.length > 0) {
+      setIsRunning(false);
+      const score = calculateScore();
+      onComplete(score, moves, timer);
+    }
+  }, [matched, cards, moves, timer, onComplete, calculateScore]);
 
-  // Handle card flip
-  const handleFlip = (uniqueId) => {
-    if (flipped.length === 2 || flipped.includes(uniqueId) || matched.includes(uniqueId)) {
+  const handleFlip = (id) => {
+    if (flipped.length === 2 || flipped.includes(id) || matched.includes(id)) {
       return;
     }
 
-    const newFlipped = [...flipped, uniqueId];
+    const newFlipped = [...flipped, id];
     setFlipped(newFlipped);
     setMoves(prev => prev + 1);
 
     if (newFlipped.length === 2) {
       const [firstId, secondId] = newFlipped;
-      const firstCard = cards.find(card => card.uniqueId === firstId);
-      const secondCard = cards.find(card => card.uniqueId === secondId);
+      const firstCard = cards.find(card => card.id === firstId);
+      const secondCard = cards.find(card => card.id === secondId);
 
-      if (firstCard.id === secondCard.id) {
+      if (firstCard.symbol === secondCard.symbol) {
         // Match found
         setTimeout(() => {
           setMatched(prev => [...prev, firstId, secondId]);
@@ -109,58 +75,11 @@ const MemoryMatch = ({ difficulty = "easy", onComplete }) => {
     }
   };
 
-  // Check win condition
-  useEffect(() => {
-    if (matched.length === cards.length && cards.length > 0) {
-      setGameActive(false);
-      const score = calculateScore();
-      if (onComplete) {
-        onComplete(score, moves, timer);
-      }
-    }
-  }, [matched, cards, moves, timer, onComplete, calculateScore]);
-
-  const calculateScore = useCallback(() => {
-    const baseScore = difficulty === "easy" ? 100 : difficulty === "medium" ? 150 : 200;
-    const timeBonus = Math.max(0, 300 - timer);
-    const movePenalty = moves * 2;
-    return Math.max(50, baseScore + timeBonus - movePenalty);
-  }, [difficulty, timer, moves]);
-
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-
-  if (!gameStarted) {
-    return (
-      <div style={{ textAlign: "center", padding: "40px" }}>
-        <h2 style={{ color: "#FF6A88", marginBottom: "20px" }}>
-          Memory Match - {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Level
-        </h2>
-        <p style={{ marginBottom: "30px", fontSize: "1.1rem" }}>
-          Match pairs of art-related items! Flip two cards at a time to find matches.
-        </p>
-        <button
-          onClick={initializeGame}
-          style={{
-            background: "#FF6A88",
-            color: "white",
-            border: "none",
-            padding: "15px 30px",
-            borderRadius: "30px",
-            fontSize: "1.1rem",
-            fontWeight: "bold",
-            cursor: "pointer",
-            boxShadow: "0 4px 15px rgba(0,0,0,0.1)"
-          }}
-        >
-          Start Game
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div style={{ padding: "20px", textAlign: "center" }}>
@@ -216,13 +135,13 @@ const MemoryMatch = ({ difficulty = "easy", onComplete }) => {
         padding: "20px"
       }}>
         {cards.map((card) => {
-          const isFlipped = flipped.includes(card.uniqueId);
-          const isMatched = matched.includes(card.uniqueId);
+          const isFlipped = flipped.includes(card.id);
+          const isMatched = matched.includes(card.id);
           
           return (
             <div
-              key={card.uniqueId}
-              onClick={() => handleFlip(card.uniqueId)}
+              key={card.id}
+              onClick={() => handleFlip(card.id)}
               style={{
                 height: "100px",
                 background: isFlipped || isMatched ? "#FF6A88" : "#FFE5EC",
@@ -249,7 +168,7 @@ const MemoryMatch = ({ difficulty = "easy", onComplete }) => {
                 position: "absolute",
                 backfaceVisibility: "hidden"
               }}>
-                {card.emoji}
+                {card.symbol}
               </div>
             </div>
           );

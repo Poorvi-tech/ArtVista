@@ -1,78 +1,16 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 const ArtCreator = () => {
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [color, setColor] = useState('#FF6A88');
-  const [brushSize, setBrushSize] = useState(5);
-  const [tool, setTool] = useState('brush'); // brush, eraser, fill, shape, text
+  const [color, setColor] = useState("#000000");
+  const [fillColor, setFillColor] = useState("transparent");
+  const [strokeWidth, setStrokeWidth] = useState(2);
+  const [tool, setTool] = useState("brush");
+  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
   const [canvasHistory, setCanvasHistory] = useState([]);
   const [historyStep, setHistoryStep] = useState(-1);
-  const [textInput, setTextInput] = useState('');
-  const [fontSize, setFontSize] = useState(24);
-  const [isAddingText, setIsAddingText] = useState(false);
-  const [isDrawingShape, setIsDrawingShape] = useState(false);
-  const [shapeStartX, setShapeStartX] = useState(0);
-  const [shapeStartY, setShapeStartY] = useState(0);
-  const [currentMouseX, setCurrentMouseX] = useState(0);
-  const [currentMouseY, setCurrentMouseY] = useState(0);
-  const [selectedShape, setSelectedShape] = useState('rectangle'); // rectangle, circle, triangle
-  const [fillColor, setFillColor] = useState('transparent');
-  const [strokeWidth, setStrokeWidth] = useState(2);
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
   const [gridEnabled, setGridEnabled] = useState(false);
-  const [symmetryMode, setSymmetryMode] = useState(false);
-  const [selectedArtStyle, setSelectedArtStyle] = useState(null);
-  
-  // Art style presets
-  const artStylePresets = {
-    watercolor: {
-      colors: ['#FF9A8B', '#FF6A88', '#FF99AC', '#FFE5EC'],
-      brushSizes: [15, 25, 35],
-      description: "Soft watercolor effect"
-    },
-    impressionism: {
-      colors: ['#FFD166', '#06D6A0', '#118AB2', '#073B4C'],
-      brushSizes: [3, 8, 12],
-      description: "Light, broken brush strokes"
-    },
-    abstract: {
-      colors: ['#EF476F', '#FFD166', '#06D6A0', '#118AB2'],
-      brushSizes: [5, 15, 25, 40],
-      description: "Experimental color mixing"
-    },
-    realism: {
-      colors: ['#8D8741', '#BCA06D', '#659DBD', '#DAAD86'],
-      brushSizes: [1, 3, 5],
-      description: "Precise detail work"
-    },
-    pointillism: {
-      colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'],
-      brushSizes: [1, 2, 3],
-      description: "Build images with dots"
-    },
-    cubism: {
-      colors: ['#264653', '#2A9D8F', '#E9C46A', '#F4A261'],
-      brushSizes: [8, 12, 18],
-      description: "Geometric fragmentation"
-    }
-  };
-  
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    
-    // Set canvas size
-    canvas.width = canvasSize.width;
-    canvas.height = canvasSize.height;
-    
-    // Set initial background
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Save initial state
-    saveCanvasState();
-  }, [canvasSize, saveCanvasState]);
 
   const saveCanvasState = useCallback(() => {
     const canvas = canvasRef.current;
@@ -81,6 +19,22 @@ const ArtCreator = () => {
     setCanvasHistory(newHistory);
     setHistoryStep(newHistory.length - 1);
   }, [canvasRef, canvasHistory, historyStep]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas size
+    canvas.width = canvasSize.width;
+    canvas.height = canvasSize.height;
+    
+    // Clear canvas
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Save initial state
+    saveCanvasState();
+  }, [canvasSize, saveCanvasState]);
 
   const undo = () => {
     if (historyStep > 0) {
@@ -117,26 +71,13 @@ const ArtCreator = () => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    if (tool === 'shape') {
-      // Start shape drawing
-      setIsDrawingShape(true);
-      setShapeStartX(x);
-      setShapeStartY(y);
-      return;
-    }
-    
     ctx.beginPath();
     ctx.moveTo(x, y);
     setIsDrawing(true);
-    
-    // For symmetry mode
-    if (symmetryMode) {
-      ctx.moveTo(canvas.width - x, y);
-    }
   };
 
   const draw = (e) => {
-    if (!isDrawing && !isDrawingShape) return;
+    if (!isDrawing) return;
     
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -144,91 +85,25 @@ const ArtCreator = () => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    if (tool === 'shape' && isDrawingShape) {
-      console.log('Drawing shape:', selectedShape, 'from', shapeStartX, shapeStartY, 'to', x, y);
-      // Track current mouse position
-      setCurrentMouseX(x);
-      setCurrentMouseY(y);
-      
-      // Redraw canvas to show preview
-      redrawCanvas();
-      
-      // Draw shape preview
-      ctx.strokeStyle = color;
-      ctx.fillStyle = fillColor;
-      ctx.lineWidth = strokeWidth;
-      
-      const width = x - shapeStartX;
-      const height = y - shapeStartY;
-      
-      ctx.beginPath();
-      
-      switch (selectedShape) {
-        case 'rectangle':
-          ctx.rect(shapeStartX, shapeStartY, width, height);
-          break;
-        case 'circle':
-          const radius = Math.sqrt(width * width + height * height);
-          ctx.arc(shapeStartX, shapeStartY, radius, 0, 2 * Math.PI);
-          break;
-        case 'triangle':
-          ctx.moveTo(shapeStartX, shapeStartY);
-          ctx.lineTo(x, y);
-          ctx.lineTo(shapeStartX - width, y);
-          ctx.closePath();
-          break;
-        case 'line':
-          ctx.moveTo(shapeStartX, shapeStartY);
-          ctx.lineTo(x, y);
-          break;
-        default:
-          // Default case for unknown shapes
-          break;
-      }
-      
-      if (fillColor !== 'transparent') {
-        ctx.fill();
-      }
-      ctx.stroke();
-      return;
-    }
-    
-    if (!isDrawing) return;
-    
     switch (tool) {
       case 'brush':
-        ctx.lineWidth = brushSize;
+        ctx.lineWidth = strokeWidth;
         ctx.lineCap = 'round';
         ctx.strokeStyle = color;
         ctx.lineTo(x, y);
         ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(x, y);
-        
-        // Symmetry drawing
-        if (symmetryMode) {
-          ctx.lineTo(canvas.width - x, y);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(canvas.width - x, y);
-        }
         break;
         
       case 'eraser':
-        ctx.lineWidth = brushSize;
+        ctx.lineWidth = strokeWidth;
         ctx.lineCap = 'round';
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineTo(x, y);
         ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(x, y);
-        
-        if (symmetryMode) {
-          ctx.lineTo(canvas.width - x, y);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(canvas.width - x, y);
-        }
         break;
       default:
         // Default case for unknown tools
@@ -239,55 +114,6 @@ const ArtCreator = () => {
   const stopDrawing = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-    
-    if (tool === 'shape' && isDrawingShape) {
-      // Finalize shape drawing - draw it permanently
-      ctx.strokeStyle = color;
-      ctx.fillStyle = fillColor;
-      ctx.lineWidth = strokeWidth;
-      
-
-      
-      ctx.beginPath();
-      
-      // Get current mouse position for final shape
-      const finalWidth = currentMouseX - shapeStartX;
-      const finalHeight = currentMouseY - shapeStartY;
-      
-      switch (selectedShape) {
-        case 'rectangle':
-          ctx.rect(shapeStartX, shapeStartY, finalWidth, finalHeight);
-          break;
-        case 'circle':
-          const radius = Math.sqrt(finalWidth * finalWidth + finalHeight * finalHeight);
-          ctx.arc(shapeStartX, shapeStartY, radius, 0, 2 * Math.PI);
-          break;
-        case 'triangle':
-          ctx.moveTo(shapeStartX, shapeStartY);
-          ctx.lineTo(currentMouseX, currentMouseY);
-          ctx.lineTo(shapeStartX - finalWidth, currentMouseY);
-          ctx.closePath();
-          break;
-        case 'line':
-          ctx.moveTo(shapeStartX, shapeStartY);
-          ctx.lineTo(currentMouseX, currentMouseY);
-          break;
-        default:
-          // Default case for unknown shapes
-          break;
-      }
-      
-      if (fillColor !== 'transparent') {
-        ctx.fill();
-      }
-      ctx.stroke();
-      
-      // Finalize shape drawing
-      setIsDrawingShape(false);
-      saveCanvasState();
-      return;
-    }
-    
     ctx.beginPath();
     setIsDrawing(false);
     saveCanvasState();
@@ -323,24 +149,6 @@ const ArtCreator = () => {
     }
   };
 
-  const addText = (e) => {
-    if (!isAddingText || !textInput.trim()) return;
-    
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    ctx.font = `${fontSize}px Arial`;
-    ctx.fillStyle = color;
-    ctx.fillText(textInput, x, y);
-    
-    setTextInput('');
-    setIsAddingText(false);
-    saveCanvasState();
-  };
-
   const toggleGrid = () => {
     setGridEnabled(!gridEnabled);
     drawGrid();
@@ -372,35 +180,6 @@ const ArtCreator = () => {
       ctx.stroke();
     }
   };
-
-  const applyArtStyle = (styleName) => {
-    const preset = artStylePresets[styleName];
-    if (preset) {
-      // Apply a random color from the style's palette
-      const randomColor = preset.colors[Math.floor(Math.random() * preset.colors.length)];
-      setColor(randomColor);
-      
-      // Apply a random brush size from the style's recommendations
-      const randomBrushSize = preset.brushSizes[Math.floor(Math.random() * preset.brushSizes.length)];
-      setBrushSize(randomBrushSize);
-      
-      // Update selected style for UI feedback
-      setSelectedArtStyle(styleName);
-      
-      // Show notification
-      alert(`Applied ${styleName.charAt(0).toUpperCase() + styleName.slice(1)} style! Color: ${randomColor}, Brush: ${randomBrushSize}px`);
-    }
-  };
-
-  // Mock data for art styles
-  const artStyles = [
-    { id: 1, name: "Watercolor", description: "Soft, flowing colors", color: "#FF9A8B", styleKey: "watercolor" },
-    { id: 2, name: "Impressionism", description: "Light brush strokes", color: "#FF6A88", styleKey: "impressionism" },
-    { id: 3, name: "Abstract", description: "Non-representational art", color: "#FF99AC", styleKey: "abstract" },
-    { id: 4, name: "Realism", description: "True-to-life representation", color: "#C774E8", styleKey: "realism" },
-    { id: 5, name: "Pointillism", description: "Dots of color", color: "#AD8CFF", styleKey: "pointillism" },
-    { id: 6, name: "Cubism", description: "Geometric shapes", color: "#8CA9FF", styleKey: "cubism" }
-  ];
 
   return (
     <div style={{ 
@@ -474,8 +253,8 @@ const ArtCreator = () => {
                   type="range" 
                   min="1" 
                   max="50" 
-                  value={brushSize} 
-                  onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                  value={strokeWidth} 
+                  onChange={(e) => setStrokeWidth(parseInt(e.target.value))}
                   style={{ 
                     width: "100px",
                     accentColor: "#FF6A88"
@@ -490,7 +269,7 @@ const ArtCreator = () => {
                   minWidth: "40px",
                   textAlign: "center",
                   fontSize: "0.9rem"
-                }}>{brushSize}px</span>
+                }}>{strokeWidth}px</span>
               </div>
             </div>
             

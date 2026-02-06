@@ -4,16 +4,9 @@ import { useAuth } from "../context/AuthContext";
 const Profile = () => {
   const { user } = useAuth();
   const [profileData, setProfileData] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [preferences, setPreferences] = useState([]);
   const [newPreference, setNewPreference] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
-
-  useEffect(() => {
-    if (user) {
-      fetchProfileData();
-    }
-  }, [user]);
 
   const fetchProfileData = useCallback(async () => {
     try {
@@ -27,6 +20,12 @@ const Profile = () => {
       console.error("Error fetching profile data:", error);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchProfileData();
+    }
+  }, [user, fetchProfileData]);
 
   const updateProfile = async (profileData) => {
     try {

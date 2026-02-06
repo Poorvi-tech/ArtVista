@@ -11,28 +11,71 @@ const Exhibition = () => {
   const [filterBy, setFilterBy] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState([]);
-  const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState("grid");
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [visitorCount, setVisitorCount] = useState(1247);
-  const intervalRef = useRef(null);
-  
-  // Update current time every minute
-  useEffect(() => {
-    intervalRef.current = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000);
-    
-    // Simulate visitor count increase
-    const visitorInterval = setInterval(() => {
-      setVisitorCount(prev => prev + Math.floor(Math.random() * 3));
-    }, 10000);
-    
-    return () => {
-      clearInterval(intervalRef.current);
-      clearInterval(visitorInterval);
-    };
-  }, []);
+  const visitorIntervalRef = useRef(null);
+
+  const mockArtworks = useMemo(() => [
+    {
+      _id: "1",
+      title: "Sunset Dreams",
+      artist: "Alex Rivera",
+      imageUrl: "/images/sunset-dreams.jpeg",
+      category: "landscape",
+      likes: 124,
+      createdAt: "2023-06-15",
+      description: "A vibrant sunset landscape painting"
+    },
+    {
+      _id: "2",
+      title: "Urban Symphony",
+      artist: "Maya Chen",
+      imageUrl: "/images/urban-symphony.jpeg",
+      category: "urban",
+      likes: 89,
+      createdAt: "2023-07-22",
+      description: "Abstract representation of city life"
+    },
+    {
+      _id: "3",
+      title: "Portrait of Hope",
+      artist: "James Wilson",
+      imageUrl: "/images/portrait-of-hope.jpeg",
+      category: "portrait",
+      likes: 156,
+      createdAt: "2023-08-10",
+      description: "Emotional portrait capturing human resilience"
+    },
+    {
+      _id: "4",
+      title: "Abstract Waves",
+      artist: "Sarah Kim",
+      imageUrl: "/images/abstract-waves.jpeg",
+      category: "abstract",
+      likes: 203,
+      createdAt: "2023-05-30",
+      description: "Fluid abstract composition with dynamic colors"
+    },
+    {
+      _id: "5",
+      title: "Mountain Serenity",
+      artist: "David Thompson",
+      imageUrl: "/images/mountain-serenity.jpeg",
+      category: "landscape",
+      likes: 97,
+      createdAt: "2023-09-05",
+      description: "Peaceful mountain landscape at dawn"
+    },
+    {
+      _id: "6",
+      title: "Colorful Dreams",
+      artist: "Sophie Williams",
+      imageUrl: "/images/colorful-dreams.jpeg",
+      category: "abstract",
+      likes: 178,
+      createdAt: "2023-10-18",
+      description: "Vibrant abstract art representing dreams"
+    }
+  ], []);
 
   const mockExhibitions = useMemo(() => ({
     curated: {
@@ -121,10 +164,6 @@ const Exhibition = () => {
     }
   }), [mockArtworks]);
 
-  useEffect(() => {
-    fetchExhibition();
-  }, [activeTab, sortBy, filterBy, searchQuery]);
-
   const generateMockExhibition = useCallback(() => {
     return mockExhibitions[activeTab] || mockExhibitions.curated;
   }, [activeTab, mockExhibitions]);
@@ -166,62 +205,9 @@ const Exhibition = () => {
     }
   }, [activeTab, sortBy, filterBy, searchQuery, generateMockExhibition]);
 
-  const mockArtworks = [
-    {
-      _id: "1",
-      title: "Sunset Over Mountains",
-      artist: "Jane Smith",
-      imageUrl: "/images/sunset-mountains.jpg",
-      category: "landscape",
-      createdAt: "2023-05-15",
-      description: "A beautiful sunset painting over mountain peaks"
-    },
-    {
-      _id: "2",
-      title: "Urban Life",
-      artist: "John Doe",
-      imageUrl: "/images/urban-life.webp",
-      category: "urban",
-      createdAt: "2023-06-20",
-      description: "Cityscape capturing the essence of urban life"
-    },
-    {
-      _id: "3",
-      title: "Abstract Harmony",
-      artist: "Alex Johnson",
-      imageUrl: "/images/abstract-harmony.jpeg",
-      category: "abstract",
-      createdAt: "2023-07-10",
-      description: "An abstract composition of colors and shapes"
-    },
-    {
-      _id: "4",
-      title: "Ocean Waves",
-      artist: "Maria Garcia",
-      imageUrl: "/images/ocean-waves.jpg",
-      category: "landscape",
-      createdAt: "2023-08-05",
-      description: "Serene ocean waves crashing on the shore"
-    },
-    {
-      _id: "5",
-      title: "Modern Architecture",
-      artist: "David Chen",
-      imageUrl: "/images/modern-architecture.webp",
-      category: "urban",
-      createdAt: "2023-09-12",
-      description: "Clean lines of contemporary urban design"
-    },
-    {
-      _id: "6",
-      title: "Colorful Dreams",
-      artist: "Sophie Williams",
-      imageUrl: "/images/colorful-dreams.jpeg",
-      category: "abstract",
-      createdAt: "2023-10-18",
-      description: "Vibrant abstract art representing dreams"
-    }
-  ];
+  useEffect(() => {
+    fetchExhibition();
+  }, [activeTab, sortBy, filterBy, searchQuery, fetchExhibition]);
 
   const toggleFavorite = (artworkId) => {
     setFavorites(prev => 

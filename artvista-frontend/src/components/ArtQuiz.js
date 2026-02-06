@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
-const ArtQuiz = ({ difficulty = "easy", onComplete }) => {
+const ArtQuiz = () => {
   const [questions, setQuestions] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState("");
@@ -138,22 +138,13 @@ const ArtQuiz = ({ difficulty = "easy", onComplete }) => {
     setTimerActive(true);
   };
 
-  // Timer effect
-  useEffect(() => {
-    let interval;
-    if (timerActive && timeLeft > 0 && !showResult) {
-      interval = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            handleTimeUp();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [timerActive, timeLeft, showResult]);
+  // Handle time up
+  const handleTimeUp = useCallback(() => {
+    setTimerActive(false);
+    setTimeout(() => {
+      moveToNextQuestion();
+    }, 1500);
+  }, [moveToNextQuestion]);
 
   // Move to next question
   const moveToNextQuestion = useCallback(() => {
@@ -168,13 +159,22 @@ const ArtQuiz = ({ difficulty = "easy", onComplete }) => {
     }
   }, [currentQuestion, questions.length]);
 
-  // Handle time up
-  const handleTimeUp = useCallback(() => {
-    setTimerActive(false);
-    setTimeout(() => {
-      moveToNextQuestion();
-    }, 1500);
-  }, [moveToNextQuestion]);
+  // Effect for timer
+  useEffect(() => {
+    let interval;
+    if (timerActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            handleTimeUp();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timerActive, timeLeft, showResult, handleTimeUp]);
 
   // Handle answer selection
   const handleAnswerSelect = (answer) => {
