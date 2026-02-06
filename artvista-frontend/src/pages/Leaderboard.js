@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
 
 const Leaderboard = () => {
   const [leaderboardData, setLeaderboardData] = useState([]);

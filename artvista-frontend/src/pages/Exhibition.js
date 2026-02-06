@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Lightbox from "../components/Lightbox";
 
 const Exhibition = () => {
@@ -37,6 +37,43 @@ const Exhibition = () => {
   useEffect(() => {
     fetchExhibition();
   }, [activeTab, sortBy, filterBy, searchQuery, fetchExhibition]);
+
+  const fetchExhibition = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Check if backend API is available
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/exhibition/status`);
+      const isBackendAvailable = response.ok;
+      
+      if (isBackendAvailable) {
+        let url;
+        if (activeTab === "curated") {
+          url = `${process.env.REACT_APP_BACKEND_URL}/api/exhibition/curated?sort=${sortBy}&filter=${filterBy}&search=${searchQuery}`;
+        } else {
+          url = `${process.env.REACT_APP_BACKEND_URL}/api/exhibition/themed/${activeTab}?sort=${sortBy}&filter=${filterBy}&search=${searchQuery}`;
+        }
+        
+        const apiResponse = await fetch(url);
+        if (!apiResponse.ok) throw new Error("Failed to fetch exhibition");
+        
+        const data = await apiResponse.json();
+        setExhibition(data);
+      } else {
+        // Fallback to mock data
+        const mockData = generateMockExhibition();
+        setExhibition(mockData);
+      }
+    } catch (err) {
+      setError(err.message);
+      // Fallback to mock data on error
+      const mockData = generateMockExhibition();
+      setExhibition(mockData);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab, sortBy, filterBy, searchQuery]);
 
   const mockArtworks = [
     {
@@ -122,40 +159,8 @@ const Exhibition = () => {
     }
   };
 
-  const fetchExhibition = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Check if backend API is available
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/exhibition/status`);
-      const isBackendAvailable = response.ok;
-      
-      if (isBackendAvailable) {
-        let url;
-        if (activeTab === "curated") {
-          url = `${process.env.REACT_APP_BACKEND_URL}/api/exhibition/curated?sort=${sortBy}&filter=${filterBy}&search=${searchQuery}`;
-        } else {
-          url = `${process.env.REACT_APP_BACKEND_URL}/api/exhibition/themed/${activeTab}?sort=${sortBy}&filter=${filterBy}&search=${searchQuery}`;
-        }
-        
-        const apiResponse = await fetch(url);
-        if (!apiResponse.ok) throw new Error("Failed to fetch exhibition");
-        
-        const data = await apiResponse.json();
-        setExhibition(data);
-      } else {
-        // Use mock data if backend is not available
-        console.log("Backend not available, using mock data");
-        setExhibition(mockExhibitions[activeTab] || mockExhibitions.curated);
-      }
-    } catch (err) {
-      // Fallback to mock data on any error
-      console.error("Error fetching exhibition:", err);
-      setExhibition(mockExhibitions[activeTab] || mockExhibitions.curated);
-    } finally {
-      setLoading(false);
-    }
+  const generateMockExhibition = () => {
+    return mockExhibitions[activeTab] || mockExhibitions.curated;
   };
 
   const toggleFavorite = (artworkId) => {

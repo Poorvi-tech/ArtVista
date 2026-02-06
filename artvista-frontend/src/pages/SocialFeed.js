@@ -6,7 +6,6 @@ const SocialFeed = () => {
   const [feedItems, setFeedItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newPost, setNewPost] = useState("");
-  const [activeTab, setActiveTab] = useState("feed");
 
   useEffect(() => {
     fetchSocialFeed();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import { useAuth } from "../context/AuthContext";
 
 const Profile = () => {
@@ -15,7 +15,7 @@ const Profile = () => {
     }
   }, [user, fetchProfileData]);
 
-  const fetchProfileData = async () => {
+  const fetchProfileData = useCallback(async () => {
     try {
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/profile/${user.id}`);
       if (!response.ok) throw new Error("Failed to fetch profile data");
@@ -28,7 +28,7 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const addPreference = async () => {
     if (!newPreference.trim()) return;
