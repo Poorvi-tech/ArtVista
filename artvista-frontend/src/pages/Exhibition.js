@@ -12,7 +12,29 @@ const Exhibition = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState([]);
   const [visitorCount, setVisitorCount] = useState(1247);
+  const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState("grid");
+  const [currentTime, setCurrentTime] = useState(new Date());
   const visitorIntervalRef = useRef(null);
+  
+  // Update current time every minute
+  useEffect(() => {
+    const intervalRef = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    
+    // Simulate visitor count increase
+    const visitorInterval = setInterval(() => {
+      setVisitorCount(prev => prev + Math.floor(Math.random() * 3));
+    }, 10000);
+    
+    visitorIntervalRef.current = visitorInterval;
+    
+    return () => {
+      clearInterval(intervalRef);
+      clearInterval(visitorInterval);
+    };
+  }, []);
 
   const mockArtworks = useMemo(() => [
     {

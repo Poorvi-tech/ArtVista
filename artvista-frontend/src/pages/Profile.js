@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 const Profile = () => {
   const { user } = useAuth();
   const [profileData, setProfileData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [preferences, setPreferences] = useState([]);
   const [newPreference, setNewPreference] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
@@ -18,6 +19,8 @@ const Profile = () => {
       setPreferences(data.user.preferences || []);
     } catch (error) {
       console.error("Error fetching profile data:", error);
+    } finally {
+      setLoading(false);
     }
   }, [user]);
 

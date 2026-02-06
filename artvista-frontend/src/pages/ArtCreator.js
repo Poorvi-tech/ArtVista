@@ -11,6 +11,15 @@ const ArtCreator = () => {
   const [canvasHistory, setCanvasHistory] = useState([]);
   const [historyStep, setHistoryStep] = useState(-1);
   const [gridEnabled, setGridEnabled] = useState(false);
+  const [selectedShape, setSelectedShape] = useState(null);
+  const [textInput, setTextInput] = useState("");
+  const [fontSize, setFontSize] = useState(16);
+  const [isAddingText, setIsAddingText] = useState(false);
+  const [symmetryMode, setSymmetryMode] = useState("none");
+  const [artStyles, setArtStyles] = useState([]);
+  const [selectedArtStyle, setSelectedArtStyle] = useState(null);
+  const [applyArtStyle, setApplyArtStyle] = useState(null);
+  const [addText, setAddText] = useState(null);
 
   const saveCanvasState = useCallback(() => {
     const canvas = canvasRef.current;
