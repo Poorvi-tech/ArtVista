@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Lightbox from "../components/Lightbox";
 import CommunitySection from "../components/CommunitySection";
 import { useAuth } from "../context/AuthContext";
@@ -72,6 +72,25 @@ const Gallery = () => {
     const matchesSearch = art.title.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const highlight = params.get('highlight');
+      if (highlight) {
+        const found = artworks.find(a => a.title.toLowerCase() === decodeURIComponent(highlight).toLowerCase());
+        if (found) {
+          setLightboxImage(found.src);
+          // remove highlight param from URL to avoid reopening on navigation
+          const url = new URL(window.location.href);
+          url.searchParams.delete('highlight');
+          window.history.replaceState({}, document.title, url.toString());
+        }
+      }
+    } catch (e) {
+      // ignore parsing errors
+    }
+  }, []);
 
   // Function to render social stats with login prompt for unauthenticated users
   const renderSocialStats = (art) => {

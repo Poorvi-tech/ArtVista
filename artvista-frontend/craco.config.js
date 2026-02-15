@@ -11,5 +11,11 @@ module.exports = {
       
       return webpackConfig;
     }
+  },
+  devServer: {
+    setupMiddlewares: (middlewares, devServer) => {
+      // Return middlewares to fix deprecation warnings
+      return middlewares;
+    }
   }
 };

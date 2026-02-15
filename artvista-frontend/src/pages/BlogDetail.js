@@ -1,67 +1,88 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 
-// Dummy blog content
+// Dummy blog content (expanded to cover all posts listed in BlogList)
 const blogContent = {
   1: {
     title: "5 Tips for Better Landscape Painting",
-    content: `
-Landscapes are one of the most popular subjects in painting. 
-Here are 5 tips to improve your landscape artwork:
+    content: `Landscapes are one of the most popular subjects in painting. Here are five practical tips to improve your landscape artwork:
 
-1. Use depth with perspective - Create layers in your painting with foreground, middle ground, and background elements. Objects in the distance should be lighter, less detailed, and slightly blurred.
+1) Use depth with perspective — build foreground, middle ground, and background; soften details and lower contrast in the distance.
 
-2. Add contrast for realism - Use strong contrasts between light and shadow to create depth and visual interest. This will make your painting pop off the canvas.
+2) Add contrast for realism — place strong lights and shadows to create focal points and three-dimensionality.
 
-3. Focus on light and shadow - Observe how natural light affects your scene. Paint the light sources and shadows accurately to create a believable atmosphere.
+3) Observe light and color temperature — warm sunlight vs cool shadows will sell atmosphere.
 
-4. Practice skies and clouds - The sky sets the mood of your landscape. Practice painting different types of clouds and atmospheric conditions to enhance your scenes.
+4) Practice skies and weather — paint skies first to set mood, and study cloud formation.
 
-5. Capture natural textures - Different elements in nature have distinct textures. Practice painting grass, water, rocks, and foliage with appropriate brush techniques.
-    `,
+5) Capture textures — develop quick marks for foliage, water, and rocks rather than over-rendering.
+
+Practice each tip in small, focused studies and combine them in larger pieces.`,
+    video: 'https://www.youtube.com/embed/oWsE_K4ViHM'
   },
   2: {
     title: "The Beauty of Abstract Art",
-    content: `
-Abstract art is not random — it's a powerful form of expression through form, color, and composition.
+    content: `Abstract art explores form, color, and composition to communicate emotion and ideas without literal depiction.
 
-Famous abstract artists like Kandinsky, Pollock, and Mondrian explored emotions and concepts rather than depicting reality. Abstract art allows both the artist and viewer to interpret meaning in personal ways.
-
-Key elements of abstract art:
-- Color: Can evoke emotions and set the mood
-- Shape: Geometric or organic forms that create structure
-- Texture: Can be actual or implied through brushwork
-- Composition: How elements are arranged on the canvas
-
-To create compelling abstract art:
-1. Start with a feeling or concept you want to express
-2. Experiment with colors and brush strokes to convey that emotion
-3. Don't worry about representing real objects
-4. Focus on balance and visual harmony
-5. Trust your instincts and embrace spontaneity
-    `,
+Key ideas: use color to set mood, experiment with shapes and repetition, and apply varied textures for interest. Start with a simple concept, make quick studies, and iterate—trust intuition over literal representation.`,
+    video: 'https://www.youtube.com/embed/AB7JR3Y3hWU'
   },
   3: {
     title: "Urban Sketching: Capturing the City",
-    content: `
-Urban sketching is about capturing the energy and life of city environments in real-time.
+    content: `Urban sketching captures scenes quickly and directly from life. Work with pen and small watercolor sets.
 
-Getting started with urban sketching:
-- Start small with coffee shops, streets, and parks
-- Use simple tools — pen and watercolor or a sketchbook and pencil
-- Focus on storytelling, not perfection
-- Capture moments, people, and the atmosphere
-
-Essential tips for urban sketching:
-1. Work quickly - City scenes change rapidly with moving people and vehicles
-2. Simplify complex scenes - Focus on major shapes and forms rather than details
-3. Use bold lines - They show up better in busy environments
-4. Embrace imperfections - They add character to your sketches
-5. Include people - They bring life and scale to urban scenes
-
-Remember: Urban sketching is about experiencing the city through art, not creating perfect drawings. The process is just as important as the result.
-    `,
+Tips: prioritize composition, use loose perspective, sketch people as simple shapes, and focus on storytelling. Keep it portable and sketch often to improve speed and confidence.`,
+    video: 'https://www.youtube.com/embed/Fu4mrB5pUVo'
   },
+  4: {
+    title: "Color Theory Basics for Artists",
+    content: `Understanding color relationships is essential. Learn the color wheel, complementary and analogous schemes, and how to mix neutrals.
+
+Practice exercises: limit your palette, mix tints and tones, and paint color studies under different lighting to understand temperature and harmony.`,
+    video: 'https://www.youtube.com/embed/D-s6puCzUTM'
+  },
+  5: {
+    title: "Mastering Watercolor Techniques",
+    content: `Watercolor demands control of water and pigment. Key techniques include wet-on-wet, wet-on-dry, glazing, lifting, and drybrush.
+
+Start with value studies, learn to preserve highlights with masking or careful planning, and practice gradients and texture effects to gain confidence.`,
+    video: 'https://www.youtube.com/embed/PIjWUdmby8A'
+  },
+  6: {
+    title: "Digital Art vs Traditional Art",
+    content: `Both digital and traditional media offer unique strengths. Digital art is flexible and forgiving with layers and undo; traditional media gives tactile response and unique textures.
+
+Tips: learn fundamentals in any medium (composition, value, color), then translate skills across platforms. Experiment with hybrids—scan traditional textures into digital work.`,
+    video: 'https://www.youtube.com/embed/5Fvj2ajEB6I'
+  },
+  7: {
+    title: "Creating Depth in Your Paintings",
+    content: `Create depth using atmospheric perspective, overlapping forms, scale, and value contrast. Cooler, lighter tones recede; warmer, darker tones come forward.
+
+Use edges strategically—soften distant edges and keep foreground edges sharper to guide the eye.`,
+    video: 'https://www.youtube.com/embed/EBc6SHUw7mw'
+  },
+  8: {
+    title: "Portrait Drawing Fundamentals",
+    content: `Start portraits by mapping proportions (eyes at halfway, nose and mouth positions), then block in large shapes before details.
+
+Practice capturing gesture and expression with quick studies; focus on planes of the face and consistent light to model form.`,
+    video: 'https://www.youtube.com/embed/ux0p4mJ37YU'
+  },
+  9: {
+    title: "Art Journaling for Creative Growth",
+    content: `An art journal is a personal space to experiment, record ideas, and practice regularly. Use prompts, small daily studies, and mixed media to build a habit.
+
+Treat the journal as a laboratory—no finished pieces required, only progress.`,
+    video: 'https://www.youtube.com/embed/BOYIxByOr7w'
+  },
+  10: {
+    title: "Composition Secrets from the Masters",
+    content: `Study masterworks to learn balance, rhythm, focal points, and use of negative space. Rules like the rule of thirds, leading lines, and triangular compositions help—but so does deliberate rule-breaking.
+
+Practice composing thumbnails and rearranging elements until the design reads clearly.`,
+    video: 'https://www.youtube.com/embed/JsXTxujQYeE'
+  }
 };
 
 const BlogDetail = () => {
@@ -159,6 +180,19 @@ const BlogDetail = () => {
         >
           {post.content}
         </div>
+        {post.video && (
+          <div style={{ marginTop: 24 }}>
+            <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 12 }}>
+              <iframe
+                src={post.video}
+                title={post.title}
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        )}
         
         <Link
           to="/blog"

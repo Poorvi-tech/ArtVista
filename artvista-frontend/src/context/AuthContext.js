@@ -65,26 +65,20 @@ export function AuthProvider({ children }) {
   };
 
   // Google authentication function
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (credential) => {
     try {
-      // In a real implementation, this would use Firebase or Google SDK to authenticate
-      // For now, we'll simulate the Google login
-      // This would normally be replaced with actual Google OAuth implementation
-      
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/google`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: `google_user_${Date.now()}@gmail.com`,
-          name: `Google User ${Date.now()}`,
-          googleId: `google_id_${Date.now()}`
+          tokenId: credential
         }),
       });
 
       const data = await response.json();
-      
+
       if (response.ok) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));

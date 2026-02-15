@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+ import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 
 const LearningPaths = () => {
-  const { currentUser } = useAuth();
+  const { user } = useAuth();
   const [learningPaths, setLearningPaths] = useState([]);
   const [userProgress, setUserProgress] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,6 +11,16 @@ const LearningPaths = () => {
   const [selectedPath, setSelectedPath] = useState(null);
   const [expandedModule, setExpandedModule] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+   const [viewingLesson, setViewingLesson] = useState(null);
+   const playerRef = useRef(null);
+   const progressIntervalRef = useRef(null);
+   const [watchPercent, setWatchPercent] = useState(0);
+   const videoIdMap = {
+     "Watercolor Materials Guide": "eEXfQKabQGI",
+     "Basic Color Mixing": "eBuR2nMGBhQ",
+     "Tablet Setup Guide": "OFw4jcBjQKs",
+     "Software Basics": "TbLazDkudQo"
+   };
   
   useEffect(() => {
     let intervalId;
@@ -28,8 +38,9 @@ const LearningPaths = () => {
           const pathsResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/learning/paths`);
           if (!pathsResponse.ok) throw new Error('Failed to fetch learning paths');
           
-          const progressResponse = currentUser 
-            ? await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/learning/progress/${currentUser.uid}`)
+          const userIdForFetch = user ? (user._id || user.id || user.uid) : null;
+          const progressResponse = userIdForFetch 
+            ? await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/learning/progress/${userIdForFetch}`)
             : null;
           
           const pathsData = await pathsResponse.json();
@@ -197,7 +208,7 @@ const LearningPaths = () => {
           setLearningPaths(mockPaths);
           
           // Mock progress data
-          if (currentUser) {
+          if (user) {
             const mockProgress = [
               {
                 learningPathId: 1,
@@ -270,24 +281,25 @@ const LearningPaths = () => {
         clearInterval(intervalId);
       }
     };
-  }, [currentUser]);
+  }, [user]);
 
   const enrollInPath = async (pathId) => {
     try {
-      if (currentUser) {
-        // In a real implementation, this would call the backend
+      if (user) {
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/learning/enroll`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            userId: currentUser.uid,
+            userId: user._id || user.id || user.uid,
             learningPathId: pathId
           })
         });
         
-        if (response.ok) {
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
           // Update the enrolled status locally
           setLearningPaths(prev => 
             prev.map(path => 
@@ -295,30 +307,213 @@ const LearningPaths = () => {
             )
           );
           
-          // Add progress entry
+          // Add progress entry with real data from backend
           setUserProgress(prev => [
             ...prev,
             {
               learningPathId: pathId,
+              _id: data.progress._id,
               progress: 0,
               completedModules: [],
               completedLessons: [],
-              badges: []
+              badges: [],
+              isEnrolled: true
             }
           ]);
           
-          alert(`Successfully enrolled in learning path!`);
+          setLastUpdated(new Date());
+          alert(`Successfully enrolled! Start learning now.`);
         } else {
-          throw new Error('Failed to enroll in path');
+          if (data && data.message) {
+            alert(data.message);
+          }
+          setLearningPaths(prev => 
+            prev.map(path => 
+              (path._id === pathId || path.id === pathId) ? { ...path, enrolled: true } : path
+            )
+          );
+          const exists = userProgress.some(p => {
+            const pPathId = p.learningPathId;
+            const pathIdStr = (pathId?.toString ? pathId.toString() : pathId);
+            const pPathIdStr = (pPathId?.toString ? pPathId.toString() : pPathId);
+            return pPathIdStr === pathIdStr;
+          });
+          if (!exists) {
+            setUserProgress(prev => [
+              ...prev,
+              {
+                learningPathId: pathId,
+                progress: 0,
+                completedModules: [],
+                completedLessons: [],
+                badges: [],
+                isEnrolled: true
+              }
+            ]);
+          }
+          setLastUpdated(new Date());
         }
       } else {
         alert('Please log in to enroll in learning paths');
       }
     } catch (err) {
       console.error('Error enrolling in path:', err);
-      alert('Error enrolling in learning path');
+      setLearningPaths(prev => 
+        prev.map(path => 
+          (path._id === pathId || path.id === pathId) ? { ...path, enrolled: true } : path
+        )
+      );
+      const exists = userProgress.some(p => {
+        const pPathId = p.learningPathId;
+        const pathIdStr = (pathId?.toString ? pathId.toString() : pathId);
+        const pPathIdStr = (pPathId?.toString ? pPathId.toString() : pPathId);
+        return pPathIdStr === pathIdStr;
+      });
+      if (!exists) {
+        setUserProgress(prev => [
+          ...prev,
+          {
+            learningPathId: pathId,
+            progress: 0,
+            completedModules: [],
+            completedLessons: [],
+            badges: [],
+            isEnrolled: true
+          }
+        ]);
+      }
+      setLastUpdated(new Date());
     }
   };
+
+  const completeLesson = async (lessonId, moduleId) => {
+    try {
+      if (!user || !selectedPath) return;
+      
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/learning/complete-lesson`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user._id || user.id || user.uid,
+          learningPathId: selectedPath.id || selectedPath._id,
+          moduleId: moduleId,
+          lessonId: lessonId,
+          score: 100
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Update user progress in real-time
+        setUserProgress(prev => 
+          prev.map(p => {
+            if ((p.learningPathId === selectedPath.id || p.learningPathId === selectedPath._id)) {
+              return {
+                ...p,
+                progress: data.progress.progress,
+                completedLessons: data.progress.completedLessons,
+                badges: data.progress.badges,
+                completedAt: data.progress.completedAt
+              };
+            }
+            return p;
+          })
+        );
+        
+        setLastUpdated(new Date());
+        
+        // Show completion feedback
+        if (data.progress.progress === 100) {
+          alert('🎉 Congratulations! You have completed this learning path!');
+        } else {
+          const progressPercentage = Math.round(data.progress.progress);
+          console.log(`Lesson completed! Path progress: ${progressPercentage}%`);
+        }
+        
+        return data.progress;
+      } else {
+        console.log(data.message || 'Could not complete lesson');
+      }
+    } catch (err) {
+      console.error('Error completing lesson:', err);
+    }
+  };
+ 
+   useEffect(() => {
+     if (!viewingLesson) return;
+     const setup = () => {
+       if (playerRef.current && playerRef.current.destroy) {
+         try { playerRef.current.destroy(); } catch (e) {}
+         playerRef.current = null;
+       }
+       const YT = window.YT;
+       if (YT && YT.Player) {
+         playerRef.current = new YT.Player("yt-player", {
+           videoId: viewingLesson.videoId,
+           playerVars: { autoplay: 1, rel: 0, modestbranding: 1, controls: 1 },
+         });
+         if (progressIntervalRef.current) {
+           clearInterval(progressIntervalRef.current);
+           progressIntervalRef.current = null;
+         }
+         progressIntervalRef.current = setInterval(() => {
+           if (!playerRef.current || !playerRef.current.getDuration) return;
+           const d = playerRef.current.getDuration();
+           const t = playerRef.current.getCurrentTime();
+           if (d && t >= 0) {
+             const pct = Math.min(100, Math.round((t / d) * 100));
+             setWatchPercent(pct);
+             if (pct >= 95) {
+               if (progressIntervalRef.current) {
+                 clearInterval(progressIntervalRef.current);
+                 progressIntervalRef.current = null;
+               }
+               completeLesson(viewingLesson.lessonId, viewingLesson.moduleId);
+               setUserProgress(prev => prev.map(p => {
+                 const pathId = selectedPath.id || selectedPath._id;
+                 const pPathId = p.learningPathId;
+                 const pathIdStr = pathId?.toString ? pathId.toString() : pathId;
+                 const pPathIdStr = pPathId?.toString ? pPathId.toString() : pPathId;
+                 if (pPathIdStr === pathIdStr) {
+                   const existing = p.completedLessons || [];
+                   const normalized = existing.map(l => (l.lessonId ? l.lessonId.toString() : l?.toString ? l.toString() : l));
+                   const idStr = viewingLesson.lessonId?.toString ? viewingLesson.lessonId.toString() : viewingLesson.lessonId;
+                   if (normalized.includes(idStr)) return p;
+                   const newCompleted = [...existing, { lessonId: viewingLesson.lessonId }];
+                   const totalLessons = selectedPath.modules.reduce((sum, m) => sum + m.lessons.length, 0);
+                   const newActualProgress = totalLessons > 0 ? Math.round((newCompleted.length / totalLessons) * 100) : 0;
+                   return { ...p, completedLessons: newCompleted, progress: Math.max(p.progress || 0, newActualProgress) };
+                 }
+                 return p;
+               }));
+             }
+           }
+         }, 1000);
+       }
+     };
+     if (window.YT && window.YT.Player) {
+       setup();
+     } else {
+       const tag = document.createElement("script");
+       tag.src = "https://www.youtube.com/iframe_api";
+       document.body.appendChild(tag);
+       window.onYouTubeIframeAPIReady = setup;
+     }
+     return () => {
+       if (progressIntervalRef.current) {
+         clearInterval(progressIntervalRef.current);
+         progressIntervalRef.current = null;
+       }
+       if (playerRef.current && playerRef.current.destroy) {
+         try { playerRef.current.destroy(); } catch (e) {}
+         playerRef.current = null;
+       }
+       setWatchPercent(0);
+     };
+   }, [viewingLesson, selectedPath]);
 
   const getProgressForPath = (pathId) => {
     const progress = userProgress.find(p => p.learningPathId === pathId);
@@ -331,8 +526,18 @@ const LearningPaths = () => {
   };
 
   const getCompletedLessonsForPath = (pathId) => {
-    const progress = userProgress.find(p => p.learningPathId === pathId);
-    return progress ? progress.completedLessons || [] : [];
+    const progress = userProgress.find(p => {
+      const pPathId = p.learningPathId;
+      const pathIdStr = pathId?.toString ? pathId.toString() : pathId;
+      const pPathIdStr = pPathId?.toString ? pPathId.toString() : pPathId;
+      return pPathIdStr === pathIdStr;
+    });
+    if (!progress || !progress.completedLessons) return [];
+    
+    return progress.completedLessons.map(lesson => {
+      // Return the lessonId in a consistent format
+      return lesson.lessonId?.toString ? lesson.lessonId.toString() : lesson.lessonId;
+    });
   };
 
   const filteredPaths = activeTab === "all" 
@@ -684,7 +889,7 @@ const LearningPaths = () => {
                     
                     {actualProgress === 0 && !path.enrolled ? (
                       <button
-                        onClick={() => enrollInPath(path.id)}
+                        onClick={() => enrollInPath(path._id || path.id)}
                         style={{
                           padding: "10px 20px",
                           background: "white",
@@ -912,10 +1117,11 @@ const LearningPaths = () => {
                         gap: "10px"
                       }}>
                         {module.lessons.map((lesson, lessonIndex) => {
-                          // Generate a fallback ID if lesson.id is undefined
-                          const lessonId = lesson.id !== undefined ? lesson.id : `${module.id || 'unknown'}-lesson-${lessonIndex}`;
+                          // Prefer backend _id when available, fall back to id or generated id for mocks
+                          const lessonId = lesson._id ? lesson._id : (lesson.id !== undefined ? lesson.id : `${module._id || module.id || 'unknown'}-lesson-${lessonIndex}`);
+                          const moduleIdForRequest = module._id ? module._id : module.id;
                           const isCompleted = getCompletedLessonsForPath(selectedPath.id)
-                            .includes(lessonId);
+                            .includes(lessonId.toString ? lessonId.toString() : lessonId);
                           
                           return (
                             <div
@@ -948,18 +1154,41 @@ const LearningPaths = () => {
                               </div>
                               
                               <button
+                                onClick={() => {
+                                  if (isCompleted || !user) return;
+                                  const vId = videoIdMap[lesson.title];
+                                  if (vId) {
+                                    setViewingLesson({ lessonId, moduleId: moduleIdForRequest, videoId: vId, title: lesson.title });
+                                  } else {
+                                    completeLesson(lessonId, moduleIdForRequest);
+                                  }
+                                }}
                                 style={{
                                   padding: "8px 15px",
                                   background: isCompleted ? "#4CAF50" : "#FF6A88",
                                   color: "white",
                                   border: "none",
                                   borderRadius: "20px",
-                                  cursor: "pointer",
+                                  cursor: isCompleted ? "not-allowed" : "pointer",
                                   fontWeight: "bold",
-                                  fontSize: "0.9rem"
+                                  fontSize: "0.9rem",
+                                  opacity: isCompleted ? 0.8 : 1,
+                                  transition: "all 0.3s"
+                                }}
+                                onMouseEnter={e => {
+                                  if (!isCompleted) {
+                                    e.target.style.background = "#ff5a7a";
+                                    e.target.style.transform = "scale(1.05)";
+                                  }
+                                }}
+                                onMouseLeave={e => {
+                                  if (!isCompleted) {
+                                    e.target.style.background = "#FF6A88";
+                                    e.target.style.transform = "scale(1)";
+                                  }
                                 }}
                               >
-                                {isCompleted ? "Review" : "Start"}
+                                {isCompleted ? "✓ Completed" : "Start"}
                               </button>
                             </div>
                           );
@@ -973,6 +1202,46 @@ const LearningPaths = () => {
           </div>
         </div>
       )}
+       {viewingLesson && (
+         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+           <div style={{ background: "white", borderRadius: "12px", width: "90%", maxWidth: "1000px", padding: "16px", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
+             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+               <div style={{ fontWeight: 700, color: "#FF6A88" }}>{viewingLesson.title}</div>
+               <div style={{ display: "flex", gap: "8px" }}>
+                 <button
+                   onClick={() => {
+                     const v = viewingLesson.videoId;
+                     const t = playerRef.current && playerRef.current.getCurrentTime ? Math.floor(playerRef.current.getCurrentTime()) : 0;
+                     const url = `https://www.youtube.com/watch?v=${v}&t=${t}s`;
+                     window.open(url, "_blank", "noopener");
+                   }}
+                   style={{ padding: "6px 12px", borderRadius: "20px", border: "2px solid #4A90E2", background: "white", color: "#4A90E2", fontWeight: "bold", cursor: "pointer" }}
+                 >
+                   Open on YouTube
+                 </button>
+                 <button
+                   onClick={() => setViewingLesson(null)}
+                   style={{ padding: "6px 12px", borderRadius: "20px", border: "2px solid #FF6A88", background: "white", color: "#FF6A88", fontWeight: "bold", cursor: "pointer" }}
+                 >
+                   Close
+                 </button>
+               </div>
+             </div>
+             <div style={{ width: "100%", height: "520px", borderRadius: "8px", overflow: "hidden", background: "#000" }}>
+               <div id="yt-player" style={{ width: "100%", height: "100%" }}></div>
+             </div>
+             <div style={{ marginTop: "12px" }}>
+               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                 <span style={{ fontSize: "0.9rem", color: "#666" }}>Watch progress</span>
+                 <span style={{ fontSize: "0.9rem", color: "#FF6A88", fontWeight: "bold" }}>{watchPercent}%</span>
+               </div>
+               <div style={{ height: "8px", background: "#f0f0f0", borderRadius: "4px", overflow: "hidden" }}>
+                 <div style={{ height: "100%", width: `${watchPercent}%`, background: "linear-gradient(90deg, #FF9A8B 0%, #FF6A88 50%, #FF99AC 100%)" }}></div>
+               </div>
+             </div>
+           </div>
+         </div>
+       )}
     </div>
   );
 };

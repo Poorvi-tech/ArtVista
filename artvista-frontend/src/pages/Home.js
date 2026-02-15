@@ -3,6 +3,13 @@ import AIRecommendations from "../components/AIRecommendations";
 import ArtCreationSuggestions from "../components/ArtCreationSuggestions";
 import { useNavigate } from 'react-router-dom';
 
+// Mapping of learning path titles to YouTube playlist URLs
+const playlistUrls = {
+  "Watercolor Fundamentals": "https://youtube.com/playlist?list=PLdb2U9SHuFlLKHCUZIzzSsvd8_z8I9JcR&si=ukdcf8YcLLxBVv3G",
+  "Digital Art Mastery": "https://youtube.com/playlist?list=PLyae1VtzaHuOsreCWVIOIbTM6o-83JgK4&si=3rxWkK38GfbyirAl",
+  "Portrait Drawing Essentials": "https://youtube.com/playlist?list=PLnWaXZaVfDBcT7DIwZMylxf_ptx1OyEA7&si=lF-HzP_tkTUahWCX"
+};
+
 const Home = () => {
   const navigate = useNavigate();
 
@@ -667,63 +674,68 @@ const ArtworkCard = ({ artwork }) => (
   </div>
 );
 
-// Blog Card Component
-const BlogCard = ({ blog }) => (
-  <div style={{
-    background: "white",
-    borderRadius: "15px",
-    padding: "20px",
-    boxShadow: "0 6px 15px rgba(0,0,0,0.05)",
-    border: "1px solid #FFE5EC",
-    transition: "transform 0.3s, box-shadow 0.3s"
-  }}
-  onMouseEnter={e => {
-    e.currentTarget.style.transform = "translateY(-5px)";
-    e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.1)";
-  }}
-  onMouseLeave={e => {
-    e.currentTarget.style.transform = "translateY(0)";
-    e.currentTarget.style.boxShadow = "0 6px 15px rgba(0,0,0,0.05)";
-  }}
-  >
-    <h3 style={{ 
-      margin: "0 0 15px 0", 
-      color: "#333",
-      fontSize: "1.4rem"
-    }}>
-      {blog.title}
-    </h3>
-    <p style={{ 
-      margin: "0 0 20px 0", 
-      color: "#666",
-      lineHeight: "1.6"
-    }}>
-      {blog.excerpt}
-    </p>
-    <button style={{
-      color: "white",
-      background: "linear-gradient(135deg, #FF9A8B 0%, #FF6A88 50%, #FF99AC 100%)",
-      padding: "10px 20px",
-      borderRadius: "30px",
-      border: "none",
-      cursor: "pointer",
-      fontWeight: "bold",
-      boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-      transition: "transform 0.2s, box-shadow 0.2s"
+// Blog Card Component — navigates to blog detail
+function BlogCard({ blog }) {
+  const navigate = useNavigate();
+  return (
+    <div style={{
+      background: "white",
+      borderRadius: "15px",
+      padding: "20px",
+      boxShadow: "0 6px 15px rgba(0,0,0,0.05)",
+      border: "1px solid #FFE5EC",
+      transition: "transform 0.3s, box-shadow 0.3s"
     }}
     onMouseEnter={e => {
-      e.target.style.transform = "translateY(-2px)";
-      e.target.style.boxShadow = "0 6px 15px rgba(0,0,0,0.15)";
+      e.currentTarget.style.transform = "translateY(-5px)";
+      e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.1)";
     }}
     onMouseLeave={e => {
-      e.target.style.transform = "translateY(0)";
-      e.target.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)";
+      e.currentTarget.style.transform = "translateY(0)";
+      e.currentTarget.style.boxShadow = "0 6px 15px rgba(0,0,0,0.05)";
     }}
     >
-      Read More
-    </button>
-  </div>
-);
+      <h3 style={{ 
+        margin: "0 0 15px 0", 
+        color: "#333",
+        fontSize: "1.4rem"
+      }}>
+        {blog.title}
+      </h3>
+      <p style={{ 
+        margin: "0 0 20px 0", 
+        color: "#666",
+        lineHeight: "1.6"
+      }}>
+        {blog.excerpt}
+      </p>
+      <button
+        onClick={() => navigate(`/blog/${blog.id}`)}
+        style={{
+          color: "white",
+          background: "linear-gradient(135deg, #FF9A8B 0%, #FF6A88 50%, #FF99AC 100%)",
+          padding: "10px 20px",
+          borderRadius: "30px",
+          border: "none",
+          cursor: "pointer",
+          fontWeight: "bold",
+          boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+          transition: "transform 0.2s, box-shadow 0.2s"
+        }}
+        onMouseEnter={e => {
+          e.target.style.transform = "translateY(-2px)";
+          e.target.style.boxShadow = "0 6px 15px rgba(0,0,0,0.15)";
+        }}
+        onMouseLeave={e => {
+          e.target.style.transform = "translateY(0)";
+          e.target.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)";
+        }}
+      >
+        Read More
+      </button>
+    </div>
+  );
+}
 
 // Learning Path Card Component
 const LearningPathCard = ({ path }) => (
@@ -794,6 +806,15 @@ const LearningPathCard = ({ path }) => (
       e.target.style.transform = "translateY(0)";
       e.target.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)";
     }}
+      onClick={() => {
+        const url = playlistUrls[path.title];
+        if (url) {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        } else {
+          // fallback: navigate to the learning page
+          window.location.href = '/learning';
+        }
+      }}
     >
       Start Learning
     </button>

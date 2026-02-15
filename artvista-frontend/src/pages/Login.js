@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from "../context/AuthContext";
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -29,12 +29,12 @@ const Login = () => {
     setLoading(false);
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleCallback = useCallback(async (response) => {
     setLoading(true);
     setError('');
-    
+
     try {
-      const result = await signInWithGoogle();
+      const result = await signInWithGoogle(response.credential);
       if (result.success) {
         navigate('/');
       } else {
@@ -43,9 +43,24 @@ const Login = () => {
     } catch (err) {
       setError('Google sign-in failed. Please try again.');
     }
-    
+
     setLoading(false);
-  };
+  }, [signInWithGoogle, navigate]);
+
+  useEffect(() => {
+    // Initialize Google Sign-In
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+        callback: handleGoogleCallback
+      });
+
+      window.google.accounts.id.renderButton(
+        document.getElementById('google-signin-button'),
+        { theme: 'outline', size: 'large' }
+      );
+    }
+  }, [handleGoogleCallback]);
 
   return (
     <div style={{
@@ -224,47 +239,14 @@ const Login = () => {
           )}
           
           {/* Google Sign In Button */}
-          <button 
-            onClick={handleGoogleSignIn}
-            disabled={loading}
+          <div 
+            id="google-signin-button"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '12px',
-              padding: '12px',
-              borderRadius: '8px',
-              border: '1px solid #ddd',
-              background: 'white',
-              color: '#5F6368',
-              fontSize: '1rem',
-              fontWeight: '500',
-              cursor: loading ? 'not-allowed' : 'pointer',
               marginBottom: '20px',
-              transition: 'all 0.3s',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
+              display: 'flex',
+              justifyContent: 'center'
             }}
-            onMouseEnter={e => e.target.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)"}
-            onMouseLeave={e => e.target.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)"}
-          >
-            <span style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '20px',
-              height: '20px',
-              borderRadius: '3px',
-              backgroundColor: 'white',
-              border: '1px solid #ddd',
-              fontSize: '0.8rem',
-              fontWeight: 'bold',
-              color: '#5F6368',
-              marginRight: '8px'
-            }}>
-              G
-            </span>
-            Continue with Google
-          </button>
+          ></div>
           
           <div style={{
             display: 'flex',

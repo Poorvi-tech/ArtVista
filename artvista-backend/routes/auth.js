@@ -3,7 +3,10 @@ const router = express.Router();
 const User = require('../models/User'); // Use MongoDB User model
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { OAuth2Client } = require('google-auth-library');
 require('dotenv').config();
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Register a new user
 router.post('/register', async (req, res) => {
@@ -95,60 +98,75 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Google authentication (simulated for demo)
+// Google authentication
 router.post('/google', async (req, res) => {
     try {
-        // In a real implementation, you would verify the Google ID token
-        // For demo purposes, we'll create/fetch a user
-        
-        // Extract data from the request body (in a real app, this would be the Google ID token)
-        const { tokenId, googleId, email, name } = req.body;
-        
-        // For demo purposes, if no email is provided, generate a simulated one
-        const userEmail = email || `user${Date.now()}@gmail.com`;
-        const userName = name || `Google User ${Date.now()}`;
-        
+        const { tokenId } = req.body;
+
+        if (!tokenId) {
+            return res.status(400).json({ error: 'Token ID is required' });
+        }
+
+        // Verify the Google ID token
+        const ticket = await client.verifyIdToken({
+            idToken: tokenId,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        const { sub: googleId, email, name, picture } = payload;
+
         // Check if user already exists
-        let user = await User.findOne({ email: userEmail });
-        
+        let user = await User.findOne({ email });
+
         if (user) {
-            // User exists, return existing user
+            // User exists, update if necessary
+            if (!user.isGoogleUser) {
+                user.isGoogleUser = true;
+                user.googleId = googleId;
+                await user.save();
+            }
             const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-            
+
             res.json({
                 message: 'Google login successful',
                 user: {
                     id: user._id,
                     name: user.name,
-                    email: user.email
+                    email: user.email,
+                    picture: user.picture || picture
                 },
                 token
             });
         } else {
             // User doesn't exist, create new user
             const newUser = new User({
-                name: userName,
-                email: userEmail,
+                name,
+                email,
                 password: null, // Google users don't have password
-                isGoogleUser: true
+                isGoogleUser: true,
+                googleId,
+                picture
             });
-            
+
             await newUser.save();
-            
+
             const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-            
+
             res.json({
                 message: 'Google registration successful',
                 user: {
                     id: newUser._id,
                     name: newUser.name,
-                    email: newUser.email
+                    email: newUser.email,
+                    picture: newUser.picture
                 },
                 token
             });
         }
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Google auth error:', err);
+        res.status(500).json({ error: 'Google authentication failed' });
     }
 });
 

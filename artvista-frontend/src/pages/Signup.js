@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from "../context/AuthContext";
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -11,6 +11,24 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const { register, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+
+  const handleGoogleCallback = useCallback(async (response) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await signInWithGoogle(response.credential);
+      if (result.success) {
+        navigate('/');
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError('Google sign-up failed. Please try again.');
+    }
+
+    setLoading(false);
+  }, [signInWithGoogle, navigate]);
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -42,23 +60,20 @@ const Signup = () => {
     setLoading(false);
   };
 
-  const handleGoogleSignUp = async () => {
-    setLoading(true);
-    setError('');
-    
-    try {
-      const result = await signInWithGoogle();
-      if (result.success) {
-        navigate('/');
-      } else {
-        setError(result.error);
-      }
-    } catch (err) {
-      setError('Google sign-up failed. Please try again.');
+  useEffect(() => {
+    // Initialize Google Sign-In
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+        callback: handleGoogleCallback
+      });
+
+      window.google.accounts.id.renderButton(
+        document.getElementById('google-signup-button'),
+        { theme: 'outline', size: 'large' }
+      );
     }
-    
-    setLoading(false);
-  };
+  }, [handleGoogleCallback]);
 
   return (
     <div style={{
@@ -237,47 +252,14 @@ const Signup = () => {
           )}
           
           {/* Google Sign Up Button */}
-          <button 
-            onClick={handleGoogleSignUp}
-            disabled={loading}
+          <div 
+            id="google-signup-button"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '12px',
-              padding: '12px',
-              borderRadius: '8px',
-              border: '1px solid #ddd',
-              background: 'white',
-              color: '#5F6368',
-              fontSize: '1rem',
-              fontWeight: '500',
-              cursor: loading ? 'not-allowed' : 'pointer',
               marginBottom: '20px',
-              transition: 'all 0.3s',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
+              display: 'flex',
+              justifyContent: 'center'
             }}
-            onMouseEnter={e => e.target.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)"}
-            onMouseLeave={e => e.target.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)"}
-          >
-            <span style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '20px',
-              height: '20px',
-              borderRadius: '3px',
-              backgroundColor: 'white',
-              border: '1px solid #ddd',
-              fontSize: '0.8rem',
-              fontWeight: 'bold',
-              color: '#5F6368',
-              marginRight: '8px'
-            }}>
-              G
-            </span>
-            Sign up with Google
-          </button>
+          ></div>
           
           <div style={{
             display: 'flex',

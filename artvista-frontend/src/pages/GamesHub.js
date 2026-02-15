@@ -5,6 +5,7 @@ import MemoryMatch from "../components/MemoryMatch";
 import ColorMixing from "../components/ColorMixing";
 import ArtQuiz from "../components/ArtQuiz";
 import SpotTheDifference from "../components/SpotTheDifference";
+import DragDropSceneMaker from "../components/DragDropSceneMaker";
 
 const GamesHub = () => {
   const navigate = useNavigate();
@@ -43,6 +44,14 @@ const GamesHub = () => {
       description: "Find all the hidden differences between two similar images",
       icon: "🔍",
       component: SpotTheDifference,
+      difficulties: ["easy", "medium", "hard"]
+    },
+    {
+      id: "drag-drop-scene",
+      title: "Drag & Drop Scene Maker",
+      description: "Create beautiful scenes by dragging elements onto the canvas with AI-powered suggestions",
+      icon: "🖼️",
+      component: DragDropSceneMaker,
       difficulties: ["easy", "medium", "hard"]
     }
   ];

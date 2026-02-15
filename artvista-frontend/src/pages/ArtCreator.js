@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 
 const ArtCreator = () => {
   const canvasRef = useRef(null);
+  const isInitializing = useRef(true);
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState("#000000");
   const [fillColor, setFillColor] = useState("transparent");
@@ -15,7 +16,13 @@ const ArtCreator = () => {
   const [textInput, setTextInput] = useState("");
   const [fontSize, setFontSize] = useState(16);
   const [isAddingText, setIsAddingText] = useState(false);
-  const [symmetryMode, setSymmetryMode] = useState("none");
+  const [isSymmetryEnabled, setIsSymmetryEnabled] = useState(false);
+  const [startPos, setStartPos] = useState(null);
+  const [shapePreviewUrl, setShapePreviewUrl] = useState(null);
+  const lastPointRef = useRef(null);
+  const [styles, setStyles] = useState([]);
+  const [palettes, setPalettes] = useState([]);
+  const [enhanceMsg, setEnhanceMsg] = useState('');
 
   const saveCanvasState = useCallback(() => {
     const canvas = canvasRef.current;
@@ -37,9 +44,37 @@ const ArtCreator = () => {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Save initial state
-    saveCanvasState();
-  }, [canvasSize, saveCanvasState]);
+    // Save initial state only once on first mount
+    if (isInitializing.current) {
+      isInitializing.current = false;
+      const newHistory = [canvas.toDataURL()];
+      setCanvasHistory(newHistory);
+      setHistoryStep(0);
+    }
+    if (gridEnabled) {
+      drawGrid(true);
+    }
+  }, [canvasSize]);
+  
+  useEffect(() => {
+    const base = process.env.REACT_APP_BACKEND_URL || window.REACT_APP_BACKEND_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : '');
+    if (!base) return;
+    const fetchData = async () => {
+      try {
+        const [sRes, pRes] = await Promise.all([
+          fetch(`${base.replace(/\/$/, '')}/api/artcreator/styles`),
+          fetch(`${base.replace(/\/$/, '')}/api/artcreator/palettes`)
+        ]);
+        const sData = await sRes.json();
+        const pData = await pRes.json();
+        if (Array.isArray(sData)) setStyles(sData);
+        if (Array.isArray(pData)) setPalettes(pData);
+      } catch (e) {
+        // silent fail; page still works offline
+      }
+    };
+    fetchData();
+  }, []);
 
   const undo = () => {
     if (historyStep > 0) {
@@ -76,8 +111,25 @@ const ArtCreator = () => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
+    if (tool === 'text' && textInput.trim()) {
+      ctx.fillStyle = color;
+      ctx.font = `${fontSize}px sans-serif`;
+      ctx.fillText(textInput, x, y);
+      setIsAddingText(false);
+      saveCanvasState();
+      return;
+    }
+    
+    if (tool === 'shape' && selectedShape) {
+      setStartPos({ x, y });
+      setShapePreviewUrl(canvas.toDataURL());
+      setIsDrawing(true);
+      return;
+    }
+    
     ctx.beginPath();
     ctx.moveTo(x, y);
+    lastPointRef.current = { x, y };
     setIsDrawing(true);
   };
 
@@ -99,6 +151,19 @@ const ArtCreator = () => {
         ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(x, y);
+        if (isSymmetryEnabled && lastPointRef.current) {
+          const prev = lastPointRef.current;
+          ctx.lineWidth = strokeWidth;
+          ctx.lineCap = 'round';
+          ctx.strokeStyle = color;
+          ctx.beginPath();
+          ctx.moveTo(canvas.width - prev.x, prev.y);
+          ctx.lineTo(canvas.width - x, y);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+        }
+        lastPointRef.current = { x, y };
         break;
         
       case 'eraser':
@@ -109,10 +174,66 @@ const ArtCreator = () => {
         ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(x, y);
+        if (isSymmetryEnabled && lastPointRef.current) {
+          const prev = lastPointRef.current;
+          ctx.lineWidth = strokeWidth;
+          ctx.lineCap = 'round';
+          ctx.strokeStyle = '#FFFFFF';
+          ctx.beginPath();
+          ctx.moveTo(canvas.width - prev.x, prev.y);
+          ctx.lineTo(canvas.width - x, y);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+        }
+        lastPointRef.current = { x, y };
+        break;
+      
+      case 'shape':
+        if (!selectedShape || !startPos) return;
+        if (shapePreviewUrl) {
+          const img = new Image();
+          img.onload = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            ctx.lineWidth = strokeWidth;
+            ctx.strokeStyle = color;
+            ctx.fillStyle = fillColor === 'transparent' ? 'rgba(0,0,0,0)' : fillColor;
+            const sx = startPos.x, sy = startPos.y;
+            const w = x - sx, h = y - sy;
+            if (selectedShape === 'rectangle') {
+              if (fillColor !== 'transparent') ctx.fillRect(sx, sy, w, h);
+              ctx.strokeRect(sx, sy, w, h);
+            } else if (selectedShape === 'circle') {
+              const r = Math.sqrt(w*w + h*h);
+              ctx.beginPath();
+              ctx.arc(sx, sy, r, 0, Math.PI * 2);
+              if (fillColor !== 'transparent') ctx.fill();
+              ctx.stroke();
+            } else if (selectedShape === 'triangle') {
+              ctx.beginPath();
+              ctx.moveTo(sx, sy);
+              ctx.lineTo(x, y);
+              ctx.lineTo(sx, y);
+              ctx.closePath();
+              if (fillColor !== 'transparent') ctx.fill();
+              ctx.stroke();
+            } else if (selectedShape === 'line') {
+              ctx.beginPath();
+              ctx.moveTo(sx, sy);
+              ctx.lineTo(x, y);
+              ctx.stroke();
+            }
+          };
+          img.src = shapePreviewUrl;
+        }
         break;
       default:
         // Default case for unknown tools
         break;
+    }
+    if (gridEnabled) {
+      drawGrid(true);
     }
   };
 
@@ -121,7 +242,16 @@ const ArtCreator = () => {
     const ctx = canvas.getContext('2d');
     ctx.beginPath();
     setIsDrawing(false);
-    saveCanvasState();
+    if (tool === 'shape' && selectedShape && startPos && shapePreviewUrl) {
+      const rect = canvas.getBoundingClientRect();
+      // No event here, rely on lastPointRef where possible; alternatively we can't read end point on mouseup. Keep last point as current mouse in draw.
+      // Finalize already drawn preview: just save state.
+      saveCanvasState();
+      setStartPos(null);
+      setShapePreviewUrl(null);
+    } else {
+      saveCanvasState();
+    }
   };
 
   const clearCanvas = () => {
@@ -129,6 +259,9 @@ const ArtCreator = () => {
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (gridEnabled) {
+      drawGrid();
+    }
     saveCanvasState();
   };
 
@@ -140,14 +273,77 @@ const ArtCreator = () => {
     link.href = dataUrl;
     link.click();
   };
-
-  const toggleGrid = () => {
-    setGridEnabled(!gridEnabled);
-    drawGrid();
+  
+  const getUploadDataUrl = () => {
+    const src = canvasRef.current;
+    const maxW = 800;
+    const scale = src.width > maxW ? maxW / src.width : 1;
+    if (scale < 1) {
+      const tmp = document.createElement('canvas');
+      tmp.width = Math.round(src.width * scale);
+      tmp.height = Math.round(src.height * scale);
+      const tctx = tmp.getContext('2d');
+      tctx.drawImage(src, 0, 0, tmp.width, tmp.height);
+      return tmp.toDataURL('image/jpeg', 0.7);
+    }
+    return src.toDataURL('image/jpeg', 0.7);
+  };
+  
+  const enhanceArtwork = async (type = 'enhance') => {
+    setEnhanceMsg('');
+    try {
+      const base = process.env.REACT_APP_BACKEND_URL || window.REACT_APP_BACKEND_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : '');
+      if (!base) {
+        setEnhanceMsg('Backend unavailable');
+        return;
+      }
+      const dataUrl = getUploadDataUrl();
+      const res = await fetch(`${base.replace(/\/$/, '')}/api/artcreator/enhance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageData: dataUrl, enhancementType: type })
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        setEnhanceMsg(data.message || 'Enhanced');
+      } else {
+        setEnhanceMsg('Enhancement failed');
+      }
+    } catch (e) {
+      setEnhanceMsg('Enhancement error');
+    } finally {
+      setTimeout(() => setEnhanceMsg(''), 2500);
+    }
   };
 
-  const drawGrid = () => {
-    if (!gridEnabled) return;
+  const toggleGrid = () => {
+    const enabling = !gridEnabled;
+    setGridEnabled(enabling);
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const snapshot = canvasHistory[historyStep];
+    if (snapshot) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        if (enabling) {
+          drawGrid(true);
+        }
+      };
+      img.src = snapshot;
+    } else {
+      if (enabling) drawGrid(true);
+      if (!enabling) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+  };
+
+  const drawGrid = (force = false) => {
+    if (!gridEnabled && !force) return;
     
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -482,20 +678,20 @@ const ArtCreator = () => {
               {gridEnabled ? "Hide Grid" : "Show Grid"}
             </button>
             <button 
-              onClick={() => setSymmetryMode(!symmetryMode)}
+              onClick={() => setIsSymmetryEnabled(!isSymmetryEnabled)}
               style={{
-                background: symmetryMode ? "#FF9800" : "#f0f0f0",
-                color: symmetryMode ? "white" : "#333",
+                background: isSymmetryEnabled ? "#FF9800" : "#f0f0f0",
+                color: isSymmetryEnabled ? "white" : "#333",
                 border: "none",
                 padding: "12px 20px",
                 borderRadius: "30px",
                 cursor: "pointer",
                 fontWeight: "bold",
-                boxShadow: symmetryMode ? "0 4px 15px rgba(255, 152, 0, 0.4)" : "0 2px 5px rgba(0,0,0,0.1)",
+                boxShadow: isSymmetryEnabled ? "0 4px 15px rgba(255, 152, 0, 0.4)" : "0 2px 5px rgba(0,0,0,0.1)",
                 transition: "all 0.3s ease"
               }}
             >
-              {symmetryMode ? "Disable Symmetry" : "Enable Symmetry"}
+              {isSymmetryEnabled ? "Disable Symmetry" : "Enable Symmetry"}
             </button>
             <button 
               onClick={clearCanvas}
@@ -545,6 +741,23 @@ const ArtCreator = () => {
             >
               💾 Save Artwork
             </button>
+            <button 
+              onClick={() => enhanceArtwork('enhance')}
+              style={{
+                background: "linear-gradient(135deg, #2196F3 0%, #1976D2 100%)",
+                color: "white",
+                border: "none",
+                padding: "12px 20px",
+                borderRadius: "30px",
+                cursor: "pointer",
+                fontWeight: "bold",
+                boxShadow: "0 4px 15px rgba(33, 150, 243, 0.4)",
+                transition: "all 0.3s ease"
+              }}
+            >
+              ✨ Enhance (Simulated)
+            </button>
+            {enhanceMsg && <div style={{ color: "#1976D2", fontWeight: "bold" }}>{enhanceMsg}</div>}
           </div>
         </div>
         
@@ -577,7 +790,7 @@ const ArtCreator = () => {
               color: "#FF6A88"
             }}>
               {tool.charAt(0).toUpperCase() + tool.slice(1)} Mode
-              {symmetryMode && " | Symmetry ON"}
+              {isSymmetryEnabled && " | Symmetry ON"}
             </div>
             <canvas
               ref={canvasRef}
@@ -588,9 +801,23 @@ const ArtCreator = () => {
               style={{ 
                 background: "white", 
                 cursor: tool === 'text' && isAddingText ? "text" : "crosshair",
-                display: "block"
+                display: "block",
+                width: `${canvasSize.width}px`,
+                height: `${canvasSize.height}px`
               }}
             />
+            {isSymmetryEnabled && (
+              <div style={{
+                position: "absolute",
+                top: 0,
+                left: "50%",
+                transform: "translateX(-1px)",
+                width: "2px",
+                height: `${canvasSize.height}px`,
+                background: "rgba(255, 152, 0, 0.6)",
+                pointerEvents: "none"
+              }} />
+            )}
           </div>
           
           {/* Canvas Size Controls */}
@@ -659,11 +886,31 @@ const ArtCreator = () => {
           }}>
             🌟 Art Style Inspiration
           </h2>
-          <div style={{ 
-            display: "grid", 
-            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-            gap: "20px"
-          }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "16px", marginBottom: "20px" }}>
+            {styles.map((s) => (
+              <div key={s.id} style={{ padding: "12px", borderRadius: "12px", border: "1px solid #eee", background: "#fff" }}>
+                <div style={{ fontWeight: 700, color: "#333" }}>{s.name}</div>
+                <div style={{ fontSize: "12px", color: "#666", marginTop: "6px" }}>{s.description}</div>
+              </div>
+            ))}
+          </div>
+          <h3 style={{ color: "#FF6A88", marginBottom: "10px" }}>🎨 Color Palettes</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "12px" }}>
+            {palettes.map((p) => (
+              <div key={p.id} style={{ padding: "10px", borderRadius: "10px", border: "1px solid #eee", background: "#fff" }}>
+                <div style={{ fontWeight: 700 }}>{p.name}</div>
+                <div style={{ display: "flex", gap: "6px", marginTop: "8px" }}>
+                  {(p.colors || []).map((c, idx) => (
+                    <div 
+                      key={idx} 
+                      onClick={() => setColor(c)} 
+                      title={`Set brush color to ${c}`} 
+                      style={{ width: "28px", height: "28px", borderRadius: "6px", background: c, border: "1px solid #ddd", cursor: "pointer" }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
