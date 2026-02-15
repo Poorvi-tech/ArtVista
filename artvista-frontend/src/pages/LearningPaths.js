@@ -1,4 +1,4 @@
- import React, { useState, useEffect, useRef } from "react";
+ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 
 const LearningPaths = () => {
@@ -386,7 +386,7 @@ const LearningPaths = () => {
     }
   };
 
-  const completeLesson = async (lessonId, moduleId) => {
+  const completeLesson = useCallback(async (lessonId, moduleId) => {
     try {
       if (!user || !selectedPath) return;
       
@@ -440,7 +440,7 @@ const LearningPaths = () => {
     } catch (err) {
       console.error('Error completing lesson:', err);
     }
-  };
+  }, [user, selectedPath]);
  
    useEffect(() => {
      if (!viewingLesson) return;
@@ -513,7 +513,7 @@ const LearningPaths = () => {
        }
        setWatchPercent(0);
      };
-   }, [viewingLesson, selectedPath]);
+   }, [viewingLesson, selectedPath, completeLesson]);
 
   const getProgressForPath = (pathId) => {
     const progress = userProgress.find(p => p.learningPathId === pathId);

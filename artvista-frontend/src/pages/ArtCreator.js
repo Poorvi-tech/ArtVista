@@ -51,10 +51,28 @@ const ArtCreator = () => {
       setCanvasHistory(newHistory);
       setHistoryStep(0);
     }
-    if (gridEnabled) {
-      drawGrid(true);
-    }
   }, [canvasSize]);
+  
+  useEffect(() => {
+    if (!gridEnabled) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const gridSize = 20;
+    ctx.strokeStyle = '#e0e0e0';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= canvas.width; x += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= canvas.height; y += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+  }, [gridEnabled, canvasSize]);
   
   useEffect(() => {
     const base = process.env.REACT_APP_BACKEND_URL || window.REACT_APP_BACKEND_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : '');
@@ -243,7 +261,6 @@ const ArtCreator = () => {
     ctx.beginPath();
     setIsDrawing(false);
     if (tool === 'shape' && selectedShape && startPos && shapePreviewUrl) {
-      const rect = canvas.getBoundingClientRect();
       // No event here, rely on lastPointRef where possible; alternatively we can't read end point on mouseup. Keep last point as current mouse in draw.
       // Finalize already drawn preview: just save state.
       saveCanvasState();
