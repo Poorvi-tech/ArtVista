@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 
 const SceneCreatorGame = ({ difficulty = "beginner", onComplete }) => {
@@ -28,8 +28,6 @@ const SceneCreatorGame = ({ difficulty = "beginner", onComplete }) => {
     Castle: { color: "#9C27B0", icon: "🏰" },
     Star: { color: "#FFC107", icon: "⭐" },
   };
-
-  const backgrounds = ["Mountain", "Beach", "Forest", "City", "Space"];
   
   const bgColors = {
     Mountain: "linear-gradient(to bottom, #87CEEB, #E0E0E0, #9E9E9E)",
@@ -39,11 +37,18 @@ const SceneCreatorGame = ({ difficulty = "beginner", onComplete }) => {
     Space: "linear-gradient(to bottom, #000000, #1A237E, #311B92)"
   };
 
-  useEffect(() => {
-    startGame();
-  }, []);
+  const fetchSuggestions = useCallback(async (id = gameId) => {
+    if (!id) return;
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/game/scene-creator/get_suggestions/${id}`);
+      const data = await response.json();
+      setAiSuggestions(data);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [gameId]);
 
-  const startGame = async () => {
+  const startGame = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/game/scene-creator/start`, {
@@ -65,18 +70,11 @@ const SceneCreatorGame = ({ difficulty = "beginner", onComplete }) => {
       setMessage("Error starting game.");
     }
     setLoading(false);
-  };
+  }, [fetchSuggestions, user]);
 
-  const fetchSuggestions = async (id = gameId) => {
-    if (!id) return;
-    try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/game/scene-creator/get_suggestions/${id}`);
-      const data = await response.json();
-      setAiSuggestions(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  useEffect(() => {
+    startGame();
+  }, [startGame]);
 
   const handleSelectBackground = async (bg) => {
     if (!gameId) return;

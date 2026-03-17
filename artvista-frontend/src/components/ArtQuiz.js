@@ -114,7 +114,6 @@ const ArtQuiz = ({ difficulty = "easy", onComplete }) => {
   // Calculate UI colors and widths
   const maxScore = questions.length * (difficulty === "easy" ? 20 : difficulty === "medium" ? 30 : 40);
   const progressPercent = ((currentQuestion + 1) / questions.length) * 100;
-  const timePercent = (timeLeft / 30) * 100;
   const timerColor = timeLeft > 10 ? "#4CAF50" : timeLeft > 5 ? "#FF9800" : "#F44336";
 
   if (showResult) {
