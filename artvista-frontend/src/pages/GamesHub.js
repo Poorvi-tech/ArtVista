@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import MemoryMatch from "../components/MemoryMatch";
 import ColorMixing from "../components/ColorMixing";
-
+import SceneCreatorGame from "../components/SceneCreatorGame";
 import ArtQuiz from "../components/ArtQuiz";
 
 const GamesHub = () => {
@@ -13,6 +13,14 @@ const GamesHub = () => {
   const [difficulty, setDifficulty] = useState("easy");
 
   const games = [
+    {
+      id: "scene-creator",
+      title: "AI Scene Creator",
+      description: "Drag-and-drop game governed by Python AI. Follow suggestions to master scenes!",
+      icon: "🖼️",
+      component: SceneCreatorGame,
+      difficulties: ["beginner", "intermediate", "expert"]
+    },
     {
       id: "memory-match",
       title: "Memory Match",
@@ -62,20 +70,39 @@ const GamesHub = () => {
     // Send score to backend
     try {
       if (user) {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.warn("No auth token found. Please log in again to submit scores.");
+          return;
+        }
+        const displayName =
+          user.displayName ||
+          user.name ||
+          user.email ||
+          user.username ||
+          (user.uid ? `Player_${String(user.uid).slice(0, 8)}` : "Player");
+
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/game/submit`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({
-            user: user.uid || user._id || 'anonymous',
             score,
-            level: difficulty
+            level: difficulty,
+            difficulty,
+            game: selectedGame,
+            displayName
           })
         });
         
         if (!response.ok) {
-          console.error('Failed to submit score to backend:', await response.text());
+          const text = await response.text().catch(() => "");
+          console.error('Failed to submit score to backend:', text);
+          if (response.status === 401) {
+            console.warn("Session expired. Please log in again to submit scores.");
+          }
         } else {
           console.log('Score submitted to backend successfully');
         }

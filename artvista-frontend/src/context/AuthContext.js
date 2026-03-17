@@ -11,15 +11,50 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in from localStorage
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
-    
-    if (token && userData) {
-      setUser(JSON.parse(userData));
-    }
-    
-    setLoading(false);
+    let mounted = true;
+
+    const boot = async () => {
+      // Check if user is logged in from localStorage
+      const token = localStorage.getItem("token");
+      const userData = localStorage.getItem("user");
+
+      if (!token || !userData) {
+        if (mounted) setLoading(false);
+        return;
+      }
+
+      // Verify token with backend (prevents "stale login" when JWT expired)
+      try {
+        const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/verify-token`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || !data?.user) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          if (mounted) setUser(null);
+        } else {
+          localStorage.setItem("user", JSON.stringify(data.user));
+          if (mounted) setUser(data.user);
+        }
+      } catch {
+        // If backend is unreachable, fall back to cached user to avoid blocking the UI
+        if (mounted) setUser(JSON.parse(userData));
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    boot();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const login = async (email, password) => {

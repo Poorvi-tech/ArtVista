@@ -56,7 +56,7 @@ const AIRecommendations = () => {
         return;
       }
 
-      const requestUrl = `${base.replace(/\/$/, '')}/api/ai/smart-suggestions/${userId}`;
+      const requestUrl = `${base.replace(/\/$/, '')}/api/ai/suggestions/${userId}`;
       console.log('Smart recommendations request URL:', requestUrl);
 
       const response = await fetch(requestUrl);

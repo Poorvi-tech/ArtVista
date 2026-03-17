@@ -2,6 +2,19 @@ import json
 import random
 import os
 from collections import defaultdict
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Configure Gemini AI (if key is present)
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+else:
+    model = None
 
 def load_dataset():
     """Load the art suggestions dataset with fallback for deployment environments"""
@@ -196,9 +209,47 @@ def generate_themes(user_preferences):
 def art_creation_suggestions(user_id):
     """Generate personalized art creation suggestions for a user"""
     # Get user preferences
-    user_preferences = get_user_preferences(user_id)
+    try:
+        user_preferences = get_user_preferences(user_id)
+    except StopIteration:
+        # Fallback if user not found
+        user_preferences = ["landscape", "watercolor"]
     
-    # Generate suggestions
+    # Try using Gemini AI if configured
+    if model:
+        try:
+            prompt = f"""
+            Generate creative art suggestions for an artist who likes these styles: {", ".join(user_preferences)}.
+            Provide the response strictly as a JSON object with this exact structure:
+            {{
+                "colorPalettes": [
+                    {{"name": "Palette Name", "colors": ["#HEX1", "#HEX2", "#HEX3"], "uses": "suggested uses"}}
+                ],
+                "techniques": [
+                    {{"name": "Technique Name", "description": "how to do it", "tools": "needed tools", "time": "estimated time", "difficulty": "Beginner/Intermediate/Advanced"}}
+                ],
+                "themes": [
+                    {{"name": "Theme Name", "description": "prompt details"}}
+                ]
+            }}
+            Provide exactly 3 color palettes, 4 techniques, and 3 themes. Do not include markdown formatting like ```json.
+            """
+            response = model.generate_content(prompt)
+            # Parse the JSON response
+            text = response.text
+            if text.startswith('```json'):
+                text = text[7:]
+            if text.startswith('```'):
+                text = text[3:]
+            if text.endswith('```'):
+                text = text[:-3]
+            
+            result = json.loads(text.strip())
+            return result
+        except Exception as e:
+            print(f"Gemini AI error: {e}. Falling back to default generation.")
+    
+    # Fallback to default generation if Gemini fails or is not configured
     color_palettes = generate_color_palettes(user_preferences)
     techniques = generate_techniques(user_preferences)
     themes = generate_themes(user_preferences)

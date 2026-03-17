@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import sys
 import os
 
@@ -8,6 +9,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from enhanced_drag_drop_game import EnhancedDragDropGame
 
 app = Flask(__name__)
+# Enable CORS for all routes so the React frontend / Node backend can access it
+CORS(app)
 
 @app.route('/')
 def home():

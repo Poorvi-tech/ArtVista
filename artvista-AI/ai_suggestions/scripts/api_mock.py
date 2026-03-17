@@ -72,6 +72,19 @@ def get_art_creation_suggestions(user_id):
     result = art_creation_suggestions(user_id)
     return jsonify(result)
 
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.json
+    if not data or "message" not in data:
+        return jsonify({"error": "Message is required"}), 400
+    
+    message = data["message"]
+    history = data.get("history", [])
+    
+    from enhanced_suggestion_engine import get_art_chat_response
+    result = get_art_chat_response(message, history)
+    return jsonify(result)
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5001))
     app.run(host='0.0.0.0', port=port, debug=False)

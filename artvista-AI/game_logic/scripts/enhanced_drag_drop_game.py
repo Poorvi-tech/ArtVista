@@ -2,6 +2,19 @@ import json
 import random
 import os
 from collections import defaultdict
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Configure Gemini AI (if key is present)
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+else:
+    model = None
 
 def load_dataset():
     """Load the art suggestions dataset with fallback for deployment environments"""
@@ -150,12 +163,39 @@ class EnhancedDragDropGame:
             "structures": ["House", "Bridge", "Castle", "Boat"],
             "decorative": ["Sun", "Star"]
         }
+        all_elements = elements["nature"] + elements["structures"] + elements["decorative"]
         
         # If no background is selected, suggest one
         if not self.background:
             return {"suggestion_type": "background", "suggestions": backgrounds[:3]}
         
-        # If background is selected, suggest elements that match the background
+        # Try using Gemini for intelligent element suggestions
+        if model:
+            try:
+                prompt = f"""
+                You are an AI game designer for a drag-and-drop scene creator game.
+                The player is building a scene with the background "{self.background}".
+                They have already added these elements: {", ".join(self.elements) if self.elements else "None"}.
+                Suggest exactly 3 new elements for them to add from this exact list of available elements: 
+                {", ".join(all_elements)}.
+                Do NOT suggest elements they have already added.
+                Return ONLY a JSON array of strings containing your 3 suggested elements. Example: ["Tree", "Sun", "Bird"]
+                """
+                response = model.generate_content(prompt)
+                text = response.text
+                if text.startswith('```json'): text = text[7:]
+                if text.startswith('```'): text = text[3:]
+                if text.endswith('```'): text = text[:-3]
+                
+                suggestions = json.loads(text.strip())
+                # Filter strictly against available and unused
+                valid_suggestions = [s for s in suggestions if s in all_elements and s not in self.elements]
+                if len(valid_suggestions) > 0:
+                    return {"suggestion_type": "element", "suggestions": valid_suggestions[:3]}
+            except Exception as e:
+                print(f"Gemini AI suggestion error: {e}. Falling back to default logic.")
+
+        # Fallback if background is selected, suggest elements that match the background
         suggestions = []
         background_lower = self.background.lower()
         

@@ -1,311 +1,336 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from "recharts";
+import "./Leaderboard.css";
+
+const medal = (idx) => (idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`);
+
+const badgeLabel = (idx) => {
+  if (idx === 0) return "Champion";
+  if (idx === 1) return "Runner-up";
+  if (idx === 2) return "Top 3";
+  return "Competitor";
+};
+
+const formatShortTime = (isoOrDate) => {
+  try {
+    return new Date(isoOrDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+};
+
+function pivotTrendsToChartData(trends) {
+  // trends: { series: [{ player, user, points: [{t, score}]}] }
+  const series = trends?.series || [];
+  const allTs = new Set();
+  for (const s of series) {
+    for (const p of s.points || []) allTs.add(new Date(p.t).toISOString());
+  }
+  const tsList = Array.from(allTs).sort();
+  const data = tsList.map((t) => ({ t }));
+
+  const byT = new Map(tsList.map((t, i) => [t, i]));
+  for (const s of series) {
+    const key = s.player || `Player_${String(s.user).substring(0, 8)}`;
+    for (const p of s.points || []) {
+      const t = new Date(p.t).toISOString();
+      const idx = byT.get(t);
+      if (idx !== undefined) data[idx][key] = p.score;
+    }
+  }
+
+  return { data, lineKeys: series.map((s) => s.player || `Player_${String(s.user).substring(0, 8)}`) };
+}
 
 const Leaderboard = () => {
+  const backendUrl = process.env.REACT_APP_BACKEND_URL;
   const [leaderboardData, setLeaderboardData] = useState([]);
+  const [trends, setTrends] = useState({ series: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [connection, setConnection] = useState({ mode: "connecting", lastUpdateAt: null });
+  const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState("score_desc");
+  const [limit, setLimit] = useState(10);
+  const pollRef = useRef(null);
+  const esRef = useRef(null);
 
-  
+  const { chartData, lineKeys } = useMemo(() => {
+    const { data, lineKeys: keys } = pivotTrendsToChartData(trends);
+    return { chartData: data, lineKeys: keys };
+  }, [trends]);
+
+  const filteredSorted = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const filtered = q
+      ? leaderboardData.filter((p) => (p.player || "").toLowerCase().includes(q))
+      : leaderboardData.slice();
+
+    const sorted = filtered.sort((a, b) => {
+      if (sortBy === "score_desc") return (b.score || 0) - (a.score || 0);
+      if (sortBy === "score_asc") return (a.score || 0) - (b.score || 0);
+      if (sortBy === "name_asc") return String(a.player || "").localeCompare(String(b.player || ""));
+      if (sortBy === "recent") return new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
+      return 0;
+    });
+
+    return sorted.slice(0, limit);
+  }, [leaderboardData, limit, query, sortBy]);
+
+  const fetchSnapshot = async () => {
+    const lbRes = await fetch(`${backendUrl}/api/game/leaderboard?limit=${encodeURIComponent(limit)}`);
+    if (!lbRes.ok) throw new Error("Failed to fetch leaderboard data");
+    const lb = await lbRes.json();
+
+    const trRes = await fetch(`${backendUrl}/api/game/leaderboard/trends?top=5&points=20`);
+    const tr = trRes.ok ? await trRes.json() : { series: [] };
+
+    setLeaderboardData(lb);
+    setTrends(tr);
+    setConnection((c) => ({ ...c, lastUpdateAt: new Date().toISOString() }));
+  };
+
+  const startPolling = () => {
+    if (pollRef.current) return;
+    pollRef.current = setInterval(() => {
+      fetchSnapshot().catch(() => {});
+    }, 30000);
+  };
+
+  const stopPolling = () => {
+    if (!pollRef.current) return;
+    clearInterval(pollRef.current);
+    pollRef.current = null;
+  };
+
   useEffect(() => {
-    let intervalId;
-    
-    const fetchData = async () => {
+    let mounted = true;
+
+    const boot = async () => {
       try {
         setLoading(true);
-        
-        // Fetch from backend API
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/game/leaderboard`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch leaderboard data');
-        }
-        
-        let data = await response.json();
-        
-        // Sort by score descending
-        const sortedScores = data.sort((a, b) => b.score - a.score);
-        
-        // Add badges
-        const withBadges = sortedScores.map((player, index) => {
-          let badge = "⭐ Player";
-          if (index === 0) badge = "🏆 Gold";
-          else if (index === 1) badge = "🥈 Silver";
-          else if (index === 2) badge = "🥉 Bronze";
-          return { ...player, badge };
-        });
-        
-        setLeaderboardData(withBadges);
         setError(null);
-      } catch (err) {
-        console.error('Error fetching leaderboard:', err);
-        setError(err.message);
+        await fetchSnapshot();
+      } catch (e) {
+        if (!mounted) return;
+        setError(e.message || "Failed to load leaderboard");
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
-    
-    fetchData();
-    
-    // Set up interval for real-time updates
-    intervalId = setInterval(fetchData, 30000); // Refresh every 30 seconds
-    
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [refreshTrigger]);
 
-  const handleRefresh = () => {
-    setRefreshTrigger(prev => prev + 1);
+    boot();
+
+    // Real-time stream (SSE)
+    try {
+      const es = new EventSource(`${backendUrl}/api/game/leaderboard/stream`, { withCredentials: false });
+      esRef.current = es;
+      setConnection({ mode: "live", lastUpdateAt: null });
+
+      es.addEventListener("leaderboard", (evt) => {
+        try {
+          const payload = JSON.parse(evt.data);
+          setLeaderboardData(payload.leaderboard || []);
+          setTrends(payload.trends || { series: [] });
+          setConnection({ mode: "live", lastUpdateAt: payload.sentAt || new Date().toISOString() });
+          setError(null);
+        } catch {
+          // ignore parse errors
+        }
+      });
+
+      es.addEventListener("error", () => {
+        // SSE failed (host/proxy/etc). Fall back to polling.
+        setConnection((c) => ({ ...c, mode: "polling" }));
+        startPolling();
+      });
+    } catch {
+      setConnection((c) => ({ ...c, mode: "polling" }));
+      startPolling();
+    }
+
+    return () => {
+      mounted = false;
+      stopPolling();
+      if (esRef.current) {
+        esRef.current.close();
+        esRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [backendUrl, limit]);
+
+  const handleManualRefresh = async () => {
+    try {
+      setError(null);
+      await fetchSnapshot();
+    } catch (e) {
+      setError(e.message || "Failed to refresh");
+    }
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center",
-        marginBottom: "20px",
-        padding: "10px 15px",
-        background: "linear-gradient(135deg, #FF9A8B 0%, #FF6A88 100%)",
-        borderRadius: "10px",
-        color: "white"
-      }}>
-        <h1 style={{ 
-          fontSize: "2.5rem", 
-          margin: "0",
-          color: "white"
-        }}>
-          🏆 Leaderboard
-        </h1>
-        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-          <span style={{ fontSize: "0.9rem" }}>Last updated: {new Date().toLocaleTimeString()}</span>
-          <button 
-            onClick={handleRefresh}
-            style={{
-              background: "rgba(255, 255, 255, 0.2)",
-              border: "1px solid white",
-              borderRadius: "20px",
-              padding: "5px 10px",
-              color: "white",
-              cursor: "pointer",
-              fontSize: "0.9rem"
-            }}
-          >
-            🔄 Refresh
-          </button>
+    <div className="lb-page">
+      <div className="lb-container">
+        <div className="lb-header">
+          <div>
+            <h1 className="lb-title">🏆 Leaderboard</h1>
+            <p className="lb-subtitle">Real-time rankings with score trends</p>
+          </div>
+
+          <div className="lb-pillRow">
+            <div className="lb-pill">
+              <strong>Status:</strong>{" "}
+              {connection.mode === "live" ? "Live" : connection.mode === "polling" ? "Polling" : "Connecting"}
+            </div>
+            <div className="lb-pill">
+              <strong>Updated:</strong>{" "}
+              {connection.lastUpdateAt ? formatShortTime(connection.lastUpdateAt) : "—"}
+            </div>
+            <button className="lb-btn" onClick={handleManualRefresh} disabled={loading}>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <div className="lb-cardGrid">
+          <div className="lb-card">
+            <div className="lb-cardHeader">
+              <h2>Rankings</h2>
+              <div className="lb-muted">Top performers across games</div>
+            </div>
+
+            <div className="lb-controls">
+              <div className="lb-control" style={{ minWidth: 240 }}>
+                <label>Search player</label>
+                <input
+                  className="lb-input"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Type a name…"
+                />
+              </div>
+
+              <div className="lb-control">
+                <label>Sort</label>
+                <select className="lb-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                  <option value="score_desc">Score (high → low)</option>
+                  <option value="score_asc">Score (low → high)</option>
+                  <option value="recent">Most recent</option>
+                  <option value="name_asc">Name (A → Z)</option>
+                </select>
+              </div>
+
+              <div className="lb-control">
+                <label>Show</label>
+                <select className="lb-select" value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
+                  <option value={10}>Top 10</option>
+                  <option value={20}>Top 20</option>
+                  <option value={50}>Top 50</option>
+                </select>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="lb-error" style={{ color: "#374151" }}>Loading…</div>
+            ) : error ? (
+              <div className="lb-error">⚠️ {error}</div>
+            ) : filteredSorted.length === 0 ? (
+              <div className="lb-error" style={{ color: "#374151" }}>
+                No results. Try a different search.
+              </div>
+            ) : (
+              <div className="lb-tableWrap">
+                <table className="lb-table" role="table">
+                  <thead>
+                    <tr role="row">
+                      <th role="columnheader">Rank</th>
+                      <th role="columnheader">Player</th>
+                      <th role="columnheader">Score</th>
+                      <th role="columnheader">Game</th>
+                      <th role="columnheader">Level</th>
+                      <th role="columnheader">Updated</th>
+                      <th role="columnheader">Badge</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSorted.map((p, idx) => (
+                      <tr key={p._id || `${p.user}-${idx}`} role="row" className={idx % 2 ? "lb-rowAlt" : ""}>
+                        <td className="lb-rank">{medal(idx)}</td>
+                        <td>
+                          <div style={{ fontWeight: 800 }}>{p.player || "Guest"}</div>
+                          <div className="lb-muted" style={{ fontSize: "0.8rem" }}>
+                            {p.user ? `ID: ${String(p.user).slice(0, 10)}…` : ""}
+                          </div>
+                        </td>
+                        <td className="lb-score">{p.score}</td>
+                        <td>{p.game || "Various"}</td>
+                        <td>{p.level || p.difficulty || "N/A"}</td>
+                        <td className="lb-muted">{p.timestamp ? new Date(p.timestamp).toLocaleString() : "—"}</td>
+                        <td>
+                          <span className="lb-badge">{badgeLabel(idx)}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div className="lb-card">
+            <div className="lb-cardHeader">
+              <h2>Score trends</h2>
+              <div className="lb-muted">Last 20 score submissions (top 5)</div>
+            </div>
+            <div className="lb-chartBody" style={{ height: 360 }}>
+              {chartData.length === 0 ? (
+                <div className="lb-error" style={{ color: "#374151" }}>
+                  No trend data yet. Play a game to generate live charts.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 10, right: 18, left: 0, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.08)" />
+                    <XAxis
+                      dataKey="t"
+                      tickFormatter={(t) => formatShortTime(t)}
+                      minTickGap={20}
+                      stroke="rgba(17,24,39,0.6)"
+                    />
+                    <YAxis stroke="rgba(17,24,39,0.6)" />
+                    <Tooltip
+                      labelFormatter={(t) => new Date(t).toLocaleString()}
+                      formatter={(val, name) => [val, name]}
+                    />
+                    <Legend />
+                    {lineKeys.slice(0, 5).map((k, i) => (
+                      <Line
+                        key={k}
+                        type="monotone"
+                        dataKey={k}
+                        dot={false}
+                        strokeWidth={2.5}
+                        stroke={["#ff4f7c", "#7c3aed", "#0ea5e9", "#16a34a", "#f59e0b"][i % 5]}
+                        connectNulls
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-      
-      <p style={{ 
-        textAlign: "center", 
-        fontSize: "1.2rem", 
-        marginBottom: "30px", 
-        color: "#666" 
-      }}>
-        Top players across all games and levels
-      </p>
-
-      {loading ? (
-        <div style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "200px",
-          flexDirection: "column"
-        }}>
-          <div style={{
-            border: "5px solid #f3f3f3",
-            borderTop: "5px solid #FF6A88",
-            borderRadius: "50%",
-            width: "50px",
-            height: "50px",
-            animation: "spin 1s linear infinite",
-            marginBottom: "20px"
-          }}></div>
-          <p>Loading leaderboard data...</p>
-        </div>
-      ) : error ? (
-        <div style={{
-          background: "white",
-          borderRadius: "15px",
-          padding: "20px",
-          textAlign: "center",
-          boxShadow: "0 6px 20px rgba(0,0,0,0.05)",
-          border: "1px solid #FFE5EC",
-          marginBottom: "20px"
-        }}>
-          <p style={{ color: "#FF6A88", marginBottom: "15px" }}>⚠️ Error loading leaderboard: {error}</p>
-          <button 
-            onClick={handleRefresh}
-            style={{
-              background: "linear-gradient(135deg, #FF9A8B 0%, #FF6A88 100%)",
-              color: "white",
-              border: "none",
-              padding: "10px 20px",
-              borderRadius: "30px",
-              cursor: "pointer"
-            }}
-          >
-            Retry
-          </button>
-        </div>
-      ) : (
-        <>
-          {leaderboardData.length === 0 ? (
-            <div style={{
-              background: "white",
-              borderRadius: "15px",
-              padding: "40px",
-              textAlign: "center",
-              boxShadow: "0 6px 20px rgba(0,0,0,0.05)",
-              border: "1px solid #FFE5EC"
-            }}>
-              <h2 style={{ 
-                fontSize: "1.8rem", 
-                color: "#FF6A88",
-                marginBottom: "20px"
-              }}>
-                No scores yet
-              </h2>
-              <p style={{ 
-                fontSize: "1.2rem", 
-                marginBottom: "30px"
-              }}>
-                Be the first to play our games and appear on the leaderboard! 🎮
-              </p>
-              <button 
-                onClick={() => window.location.href = "/games"}
-                style={{
-                  background: "linear-gradient(135deg, #FF9A8B 0%, #FF6A88 50%, #FF99AC 100%)",
-                  color: "white",
-                  border: "none",
-                  padding: "12px 30px",
-                  borderRadius: "30px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "1.1rem",
-                  boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-                  transition: "transform 0.2s, box-shadow 0.2s"
-                }}
-                onMouseEnter={e => {
-                  e.target.style.transform = "translateY(-3px)";
-                  e.target.style.boxShadow = "0 6px 20px rgba(0,0,0,0.15)";
-                }}
-                onMouseLeave={e => {
-                  e.target.style.transform = "translateY(0)";
-                  e.target.style.boxShadow = "0 4px 15px rgba(0,0,0,0.1)";
-                }}>
-                Play Games
-              </button>
-            </div>
-          ) : (
-            <div style={{ 
-              background: "white",
-              borderRadius: "15px",
-              overflow: "hidden",
-              boxShadow: "0 6px 20px rgba(0,0,0,0.05)",
-              border: "1px solid #FFE5EC"
-            }}>
-              <table
-                role="table"
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  minWidth: "400px"
-                }}
-              >
-                <thead>
-                  <tr role="row" style={{ 
-                    background: "linear-gradient(135deg, #FF9A8B 0%, #FF6A88 50%, #FF99AC 100%)", 
-                    color: "white", 
-                    textAlign: "left" 
-                  }}>
-                    <th role="columnheader" style={{ padding: "15px", fontSize: "1.1rem" }}>Rank</th>
-                    <th role="columnheader" style={{ padding: "15px", fontSize: "1.1rem" }}>Player</th>
-                    <th role="columnheader" style={{ padding: "15px", fontSize: "1.1rem" }}>Score</th>
-                    <th role="columnheader" style={{ padding: "15px", fontSize: "1.1rem" }}>Level</th>
-                    <th role="columnheader" style={{ padding: "15px", fontSize: "1.1rem" }}>Badge</th>
-                    <th role="columnheader" style={{ padding: "15px", fontSize: "1.1rem" }}>Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaderboardData.map((player, index) => (
-                    <tr
-                      key={player._id || index}
-                      role="row"
-                      style={{
-                        borderBottom: "1px solid #FFE5EC",
-                        background: index % 2 === 0 ? "#fff" : "#FFF5F7",
-                        transition: "background 0.2s"
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.background = "#FFE5EC";
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.background = index % 2 === 0 ? "#fff" : "#FFF5F7";
-                      }}
-                    >
-                      <td style={{ 
-                        padding: "15px", 
-                        fontWeight: "bold",
-                        fontSize: "1.1rem"
-                      }}>
-                        {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`}
-                      </td>
-                      <td style={{ 
-                        padding: "15px",
-                        fontSize: "1.1rem"
-                      }}>
-                        {player.player || "Guest"}
-                      </td>
-                      <td style={{ 
-                        padding: "15px",
-                        fontWeight: "bold",
-                        color: "#FF6A88",
-                        fontSize: "1.1rem"
-                      }}>
-                        {player.score}
-                      </td>
-                      <td style={{ 
-                        padding: "15px",
-                        fontSize: "1.1rem"
-                      }}>
-                        {player.level || "N/A"}
-                      </td>
-                      <td style={{ 
-                        padding: "15px",
-                        fontSize: "1.1rem"
-                      }}>
-                        <span style={{
-                          background: index === 0 ? "#FFD700" : 
-                                   index === 1 ? "#C0C0C0" : 
-                                   index === 2 ? "#CD7F32" : "#FF6A88",
-                          color: index < 3 ? "#333" : "white",
-                          padding: "5px 15px",
-                          borderRadius: "20px",
-                          fontWeight: "bold"
-                        }}>
-                          {player.badge}
-                        </span>
-                      </td>
-                      <td style={{ 
-                        padding: "15px",
-                        fontSize: "0.9rem",
-                        color: "#666"
-                      }}>
-                        {player.timestamp ? new Date(player.timestamp).toLocaleDateString() : "N/A"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </>
-      )}
     </div>
   );
 };
