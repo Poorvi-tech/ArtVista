@@ -2,26 +2,28 @@
 
 An interactive, AI-powered web platform for art enthusiasts, creators, and learners. ArtVista combines educational games, art creation tools, community features, and AI-driven recommendations to create an engaging ecosystem for exploring and learning art.
 
+## 🔗 Live Demo
+
+- **Website**: [ArtVista (Live)](https://art-vista-five.vercel.app/)
+
 ## 🌟 Features
 
 ### Core Features
-- **AI-Powered Recommendations** - Personalized art suggestions based on user preferences and behavior
-- **Art Gallery** - Browse and discover curated artwork collections
-- **Art Creator** - Tools and suggestions for creating your own artwork
-- **Interactive Games** - Educational games like Memory Match, Color Mixing, Spot the Difference
-- **Blog & Articles** - Learning resources and art discussions
-- **E-Commerce** - Shop for art supplies and prints
-- **Social Features** - Community feed, comments, and user interactions
-- **Learning Paths** - Structured courses for art education
-- **User Profiles** - Track progress, achievements, and learning history
-- **Admin Dashboard** - Content and user management
+- **AI Recommendations** - Personalized artwork/tutorial suggestions (powered by the Python AI service)
+- **Art Creation Suggestions** - Step-by-step creative prompts, palettes, and techniques
+- **Art Gallery** - Browse artworks, filter by category, and upload new artwork
+- **Games Hub (10 levels)** - Educational games + score tracking + leaderboard
+- **Blogs & Tutorials** - Blog list + blog details
+- **Learning Paths** - Curated learning paths with quick-start resources
+- **Virtual Exhibition** - Featured/curated exhibition experience
+- **Community Feed** - Social/community feed experience
+- **Profiles** - User profile page and progress tracking
+- **Shop + Cart + Checkout** - Basic e-commerce flow (protected)
 
 ### Advanced Features
-- **Leaderboards** - Gamified learning with rankings
-- **AI Art Suggestions** - Smart recommendations for art creation
-- **Exhibition Management** - Organize and showcase virtual exhibitions
-- **Cart & Checkout** - Complete e-commerce functionality
-- **Authentication** - Secure user registration and login
+- **Authentication** - Protected pages for premium features (Shop, Checkout, Games, Leaderboard, Exhibition, Art Creator, Community, Learning)
+- **Leaderboard (Realtime)** - Score leaderboard with trends + live updates (SSE)
+- **AI Scene Creator (Python-governed)** - Drag-and-drop scene building with AI suggestions via backend proxy
 
 ## 🏗️ Project Structure
 
@@ -103,8 +105,8 @@ ArtVista/
 
 #### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/artvista.git
-cd artvista
+git clone <your-repo-url>
+cd ArtVista
 ```
 
 #### 2. Frontend Setup
@@ -121,11 +123,16 @@ cd artvista-backend
 npm install
 ```
 
-Create a `.env` file in `artvista-backend/`:
+Create a `.env` file in `artvista-backend/`.
+Use `artvista-backend/.env.example` as the template (recommended), or at minimum set:
+
 ```
 MONGO_URI=mongodb://localhost:27017/artvista
+JWT_SECRET=your_jwt_secret
 PORT=5000
 NODE_ENV=development
+AI_SUGGESTIONS_URL=http://localhost:5001
+AI_GAME_URL=http://localhost:5002
 ```
 
 Start the backend:
@@ -137,10 +144,20 @@ The backend will run on `http://localhost:5000`
 #### 4. AI Services Setup
 ```bash
 cd artvista-AI/ai_suggestions
-pip install flask
+pip install -r requirements.txt
 python scripts/api_mock.py
 ```
 The AI API will run on `http://localhost:5001`
+
+To run the game logic API:
+
+```bash
+cd artvista-AI/game_logic
+pip install -r requirements.txt
+python scripts/game_api.py
+```
+
+The game API will run on `http://localhost:5002`
 
 ## 📋 API Endpoints
 
@@ -155,13 +172,21 @@ The AI API will run on `http://localhost:5001`
 - `GET /progress` - Get learning progress
 
 ### Gallery Routes (`/api/gallery`)
-- `GET /artworks` - Get all artworks
-- `GET /artworks/:id` - Get single artwork
-- `POST /artworks` - Create new artwork
+- `GET /` - Get all artworks
+- `GET /category/:category` - Get artworks by category
+- `POST /upload` - Upload a new artwork
 
 ### Game Routes (`/api/game`)
-- `GET /games` - Get all games
-- `POST /games/:gameId/score` - Submit game score
+- `GET /games` - Get games list
+- `POST /submit` - Submit game score (auth required)
+- `GET /leaderboard` - Leaderboard (top N via `?limit=10`)
+- `GET /leaderboard/trends` - Leaderboard trend series
+- `GET /leaderboard/stream` - Live leaderboard updates (SSE)
+- `POST /scene-creator/start` - Start AI Scene Creator session (proxy to Python game service)
+- `POST /scene-creator/choose_background/:gameId` - Choose background (proxy)
+- `POST /scene-creator/add_element/:gameId` - Add element (proxy)
+- `GET /scene-creator/check_scene/:gameId` - Check scene (proxy)
+- `GET /scene-creator/get_suggestions/:gameId` - Get AI suggestions (proxy)
 
 ### Blog Routes (`/api/blog`)
 - `GET /posts` - Get all blog posts
@@ -173,15 +198,19 @@ The AI API will run on `http://localhost:5001`
 - `GET /paths/:id` - Get path details
 
 ### AI Routes (`/api/ai`)
-- `GET /suggestions/:userId` - Get AI recommendations
-- `GET /art-suggestions/:userId` - Get art creation suggestions
+- `POST /chat` - ArtVista Virtual Professor chat (supports SSE streaming)
+- `GET /suggestions/:userId` - Personalized recommendations (proxy to Python AI service)
+- `GET /art-creation/:userId` - Art creation suggestions (proxy to Python AI service)
+- `GET /smart-suggestions/:userId` - Smart suggestions using MongoDB data + user progress
+- `POST /interaction/artwork` - Record artwork interaction (analytics hook)
+- `POST /interaction/tutorial` - Record tutorial interaction (analytics hook)
 
 ## 🎮 Available Games
 
 - **Memory Match** - Classic matching card game
-- **Spot the Difference** - Find differences between images
 - **Color Mixing** - Learn color theory
-- **Art Quiz** - Test art knowledge
+- **Art History Quiz** - Test knowledge of famous artists, movements, and masterpieces
+- **AI Scene Creator** - Drag-and-drop scene creation with AI guidance (via Python service)
 
 ## 👥 User Roles
 
@@ -235,16 +264,39 @@ db.users.find()
 ### Backend (.env)
 ```
 MONGO_URI=your_mongodb_connection_string
-PORT=5000
+JWT_SECRET=your_jwt_secret
+STRIPE_SECRET_KEY=your_stripe_secret
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
 NODE_ENV=development
-FIREBASE_API_KEY=your_firebase_key
+PORT=5000
+AI_SUGGESTIONS_URL=http://localhost:5001
+AI_GAME_URL=http://localhost:5002
 ```
 
 ### Frontend (.env)
 ```
-REACT_APP_API_URL=http://localhost:5000
-REACT_APP_FIREBASE_CONFIG=your_firebase_config
+REACT_APP_BACKEND_URL=http://localhost:5000
+REACT_APP_AI_SUGGESTIONS_URL=http://localhost:5001
+REACT_APP_AI_GAME_URL=http://localhost:5002
+REACT_APP_GOOGLE_CLIENT_ID=your_google_oauth_client_id
+REACT_APP_FIREBASE_API_KEY=your_firebase_api_key
+REACT_APP_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+REACT_APP_FIREBASE_PROJECT_ID=your_firebase_project_id
+REACT_APP_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+REACT_APP_FIREBASE_APP_ID=your_firebase_app_id
+REACT_APP_FIREBASE_MEASUREMENT_ID=your_firebase_measurement_id
 ```
+
+## 🌐 Deployment
+
+- **Frontend (Vercel)**: deployed at [ArtVista (Live)](https://art-vista-five.vercel.app/)
+- **Backend (Render)**: set `REACT_APP_BACKEND_URL` in the frontend to your backend URL (example: `https://artvistabackend.onrender.com`)
+- **AI services (Render)**: set `REACT_APP_AI_SUGGESTIONS_URL` and `REACT_APP_AI_GAME_URL` (examples: `https://artvistasuggestions.onrender.com`, `https://artvistagame.onrender.com`)
+
+## 🔐 Security note
+
+- Never commit real secrets to GitHub. If any secrets were committed previously, rotate them (MongoDB users/passwords, JWT secret, Stripe key, etc.) and remove them from git history if needed.
 
 ## 🤝 Contributing
 
