@@ -5,12 +5,12 @@ import MemoryMatch from "../components/MemoryMatch";
 import ColorMixing from "../components/ColorMixing";
 import SceneCreatorGame from "../components/SceneCreatorGame";
 import ArtQuiz from "../components/ArtQuiz";
+import "../games/ui/game-ui.css";
 
 const GamesHub = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [selectedGame, setSelectedGame] = useState(null);
-  const [difficulty, setDifficulty] = useState("easy");
 
   const games = [
     {
@@ -19,7 +19,6 @@ const GamesHub = () => {
       description: "Drag-and-drop game governed by Python AI. Follow suggestions to master scenes!",
       icon: "🖼️",
       component: SceneCreatorGame,
-      difficulties: ["beginner", "intermediate", "expert"]
     },
     {
       id: "memory-match",
@@ -27,7 +26,6 @@ const GamesHub = () => {
       description: "Match pairs of art-related items in this classic memory game",
       icon: "🧠",
       component: MemoryMatch,
-      difficulties: ["easy", "medium", "hard"]
     },
     {
       id: "color-mixing",
@@ -35,7 +33,6 @@ const GamesHub = () => {
       description: "Mix RGB colors to match target colors and become a color master",
       icon: "🎨",
       component: ColorMixing,
-      difficulties: ["easy", "medium", "hard"]
     },
     {
       id: "art-quiz",
@@ -43,7 +40,6 @@ const GamesHub = () => {
       description: "Test your knowledge of famous artists, movements, and masterpieces",
       icon: "📚",
       component: ArtQuiz,
-      difficulties: ["easy", "medium", "hard"]
     }
   ];
 
@@ -60,7 +56,7 @@ const GamesHub = () => {
     const scores = JSON.parse(localStorage.getItem("artvista_scores")) || [];
     scores.push({
       game: selectedGame,
-      difficulty,
+      mode: "levels",
       score,
       date: new Date().toISOString(),
       details: args
@@ -90,8 +86,8 @@ const GamesHub = () => {
           },
           body: JSON.stringify({
             score,
-            level: difficulty,
-            difficulty,
+            level: "levels",
+            difficulty: "levels",
             game: selectedGame,
             displayName
           })
@@ -167,42 +163,13 @@ const GamesHub = () => {
             boxShadow: "0 4px 8px rgba(0,0,0,0.05)",
             border: "1px solid #FFE5EC"
           }}>
-            <strong>Difficulty:</strong> {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+            <strong>Mode:</strong> 10 Levels
           </div>
-        </div>
-
-        {/* Difficulty selector */}
-        <div style={{ 
-          display: "flex", 
-          justifyContent: "center", 
-          gap: "15px", 
-          marginBottom: "30px",
-          flexWrap: "wrap"
-        }}>
-          {game.difficulties.map(level => (
-            <button
-              key={level}
-              onClick={() => setDifficulty(level)}
-              style={{
-                background: difficulty === level ? "#FF6A88" : "white",
-                color: difficulty === level ? "white" : "#FF6A88",
-                border: "2px solid #FF6A88",
-                padding: "8px 20px",
-                borderRadius: "25px",
-                fontSize: "0.9rem",
-                fontWeight: "bold",
-                cursor: "pointer",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.05)"
-              }}
-            >
-              {level.charAt(0).toUpperCase() + level.slice(1)}
-            </button>
-          ))}
         </div>
 
         {/* Game Component */}
         <GameComponent 
-          difficulty={difficulty} 
+          difficulty={"levels"} 
           onComplete={handleGameComplete}
         />
       </div>
@@ -290,27 +257,10 @@ const GamesHub = () => {
               {game.description}
             </p>
             
-            <div style={{ 
-              display: "flex", 
-              justifyContent: "center", 
-              gap: "10px",
-              flexWrap: "wrap"
-            }}>
-              {game.difficulties.map(level => (
-                <span
-                  key={level}
-                  style={{
-                    background: "#FFF5F7",
-                    color: "#FF6A88",
-                    padding: "5px 15px",
-                    borderRadius: "20px",
-                    fontSize: "0.8rem",
-                    fontWeight: "bold"
-                  }}
-                >
-                  {level.charAt(0).toUpperCase() + level.slice(1)}
-                </span>
-              ))}
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <span style={{ background: "#FFF5F7", color: "#FF6A88", padding: "6px 16px", borderRadius: "999px", fontSize: "0.85rem", fontWeight: "bold" }}>
+                10 Levels
+              </span>
             </div>
           </div>
         ))}
@@ -353,7 +303,7 @@ const GamesHub = () => {
         borderTop: "1px solid #FFE5EC",
         color: "#999"
       }}>
-        <p>Select a game above to get started. Each game offers multiple difficulty levels!</p>
+        <p>Select a game above to get started. Win levels to unlock the next one.</p>
       </div>
     </div>
   );
