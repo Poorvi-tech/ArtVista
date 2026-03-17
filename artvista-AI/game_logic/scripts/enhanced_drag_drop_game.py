@@ -2,7 +2,6 @@ import json
 import random
 import os
 from collections import defaultdict
-import google.generativeai as genai
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -10,9 +9,14 @@ load_dotenv()
 
 # Configure Gemini AI (if key is present)
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-if GEMINI_API_KEY:
+try:
+    import google.generativeai as genai
+except ModuleNotFoundError:
+    genai = None
+
+if GEMINI_API_KEY and genai:
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel("gemini-1.5-flash")
 else:
     model = None
 
